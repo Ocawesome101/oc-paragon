@@ -2,7 +2,8 @@
 
 local function select_fs()
   local fses = ls("ksrc/fs")
-  log("(1/5) Select filesystem drivers")
+  local prg = p()
+  log(prg, "Select filesystem drivers")
   local mods = menu(fses)
 
   for k,v in pairs(mods) do

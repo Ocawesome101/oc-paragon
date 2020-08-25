@@ -20,6 +20,12 @@ local function prompt(msg)
   return ret
 end
 
+local n = 1
+function p()
+  n = n + 1
+  return string.format("(%d/%d)", n - 1, #build)
+end
+
 function menu(opts)
   for i=1, #opts, 1 do
     print(string.format("%d. %s", i, opts[i]))

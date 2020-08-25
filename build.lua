@@ -45,7 +45,7 @@ function log(...)
 end
 
 for _, file in ipairs(ls(".buildscripts")) do
-  log("Running build action - " .. file)
+  log(file)
   dofile(".buildscripts/"..file)
 end
 

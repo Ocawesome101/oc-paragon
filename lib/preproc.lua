@@ -49,7 +49,7 @@ function preproc.preproc(...) -- string -- string -- Returns the output from pre
  for _,fname in ipairs(tA) do
   local f,e = io.open(fname)
   if not f then error("unable to open file "..fname..": "..e) end
-  print("\27[39m[ \27[96mPROC\27[39m ] proc "..fname)
+  log(fname)
   for line in f:lines() do
    local r = preproc.line(line)
    if type(r) == "function" then

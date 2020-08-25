@@ -20,7 +20,7 @@ kio.levels = {
   "PANIC"
 }
 
-function kio.errormsg(err)
+function kio.error(err)
   return nil, kio.errors[err] or "generic error"
 end
 

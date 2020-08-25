@@ -1,3 +1,76 @@
+--[[
+        Paragon kernel.
+        Copyright (C) 2020 Ocawesome101
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU General Public License for more details.
+        You should have received a copy of the GNU General Public License
+        along with this program.  If not, see <https://www.gnu.org/licenses/>.
+]]
+
+-- parse kernel arguments
+
+local cmdline = table.concat(table.pack(...), " ") -- ex. "init=/bin/sh loglevel=3 quiet"
+kargs = {}
+
+for word in cmdline:gmatch("[^%s]+") do
+  local k, v = word:match("(.-)=(.+)")
+  k, v = k or word, v or true
+  kargs[k] = v
+end
+
+_G._KINFO = {
+  name    = "Paragon",
+  version = "0.0.1",
+  built   = "@[{os.date('%Y.%m.%d')}]",
+  builder = "@[{os.getenv('USER')}]@@[{os.getenv('HOSTNAME')}]"
+}
+
+-- kernel i/o
+
+kio = {}
+
+kio.errors = {
+  FILE_NOT_FOUND = "no such file or directory",
+  FILE_DIRECTORY = "file is a directory",
+  IO_ERROR = "input/output error",
+  UNSUPPORTED_OPERATION = "unsupported operation",
+  PERMISSION_DENIED = "permission denied",
+  DEV_FULL = "device is full",
+  DEV_RO = "device is read only"
+}
+
+kio.levels = {
+  [0] = "DEBUG",
+  "INFO",
+  "WARNING",
+  "ERROR",
+  "PANIC"
+}
+
+function kio.error(err)
+  return nil, kio.errors[err] or "generic error"
+end
+
+function kio.dmesg(level, msg)
+  
+end
+
+function kio.panic()
+end
+
+-- kernel drivers
+
+kdrv = {}
+
+kdrv.fs = {}
+kdrv.tty = {}
+
 -- BROFS filesystem driver
 
 do
@@ -189,3 +262,36 @@ do
 
   kdrv.fs.brofs = drv
 end
+
+-- managed filesystem "driver"
+
+do
+  local drv = {}
+  drv.name = "managed filesystem driver"
+  drv.authors = {"Ocawesome101"}
+  drv.license = {"GPLv3"}
+
+  local default = {}
+  setmetatable(default, {
+    __index = function(_, k)
+      default[k] = function(self, ...)
+        if self.dev[k] then
+          return self.dev[k](...)
+        else
+          error((string.format("attempt to call field '%s' (a nil value)", k)))
+        end
+      end
+      return default[k]
+    end
+  })
+  
+  function drv.create(prx)
+    return setmetatable({dev = prx}, {__index = default})
+  end
+
+  kdrv.fs.managed = drv
+end
+
+
+
+

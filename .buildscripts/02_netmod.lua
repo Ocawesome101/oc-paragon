@@ -1,14 +1,15 @@
 -- network modules
 
 local function select_net()
-  io.write("(2/5) Enable network drivers? [Y/n] ")
+  local prg = p()
+  io.write(prg .. " Enable network drivers? [Y/n] ")
   local inp = io.read():gsub("\n", "")
   if inp:lower() == "n" then
-    log("(2/5) Skipping network drivers")
+    log(prg, "Skipping network drivers")
     return
   end
   local nets = ls("ksrc/net")
-  log("(2/5) Select network drivers")
+  log(prg, "Select network drivers")
   local sel = menu(nets)
 
   for k, v in pairs(sel) do
