@@ -109,7 +109,7 @@ function kio.error(err)
 end
 
 function kio.dmesg(level, msg)
-  local mesg = string.format("[%.2f] [%s] %s", computer.uptime(), kio.levels[level])
+  local mesg = string.format("[%.2f] [%s] %s", computer.uptime(), kio.levels[level], msg)
   if level > kio.loglevel then
     kio.console(mesg)
   end
@@ -117,21 +117,24 @@ function kio.dmesg(level, msg)
   return true
 end
 
-function kio.panic(msg)
-  local traceback = msg
-  local i = 1
-  while true do
-    local info = debug.getinfo(i)
-    if not info then break end
-    traceback = traceback .. string.format("\n  %s:%s: in %s'%s':", info.source:sub(2), info.currentline or "C", (info.namewhat ~= "" and info.namewhat .. " ") or "", info.name or "?")
-    i = i + 1
-  end
-  for line in traceback:gmatch("[^\n]+") do
-    kio.dmesg(kio.loglevels.PANIC, line)
-  end
-  kio.dmesg(kio.loglevels.PANIC, "Kernel panic!")
-  computer.beep(1)
-  while true do
-    computer.pullSignal()
+do
+  local panic = computer.pullSignal
+  function kio.panic(msg)
+    local traceback = msg
+    local i = 1
+    while true do
+      local info = debug.getinfo(i)
+      if not info then break end
+      traceback = traceback .. string.format("\n  %s:%s: in %s'%s':", info.source:sub(2), info.currentline or "C", (info.namewhat ~= "" and info.namewhat .. " ") or "", info.name or "?")
+      i = i + 1
+    end
+    for line in traceback:gmatch("[^\n]+") do
+      kio.dmesg(kio.loglevels.PANIC, line)
+    end
+    kio.dmesg(kio.loglevels.PANIC, "Kernel panic!")
+    computer.beep(1)
+    while true do
+      panic()
+    end
   end
 end
