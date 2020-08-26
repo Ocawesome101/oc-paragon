@@ -17,4 +17,6 @@
 --#include "ksrc/kinfo.lua"
 --#include "ksrc/kio.lua"
 --#include "ksrc/kdrv.lua"
+--#include "ksrc/process.lua"
+--#include "ksrc/kapi.lua"
 --#include "ktmp/misc.lua"
