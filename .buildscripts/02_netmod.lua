@@ -13,7 +13,7 @@ local function select_net()
   local sel = menu(nets)
 
   for k, v in pairs(sel) do
-    log("Adding network driver:", v)
+    log(prg, "Adding network driver:", v)
     table.insert(CONFIG.modules.net, v)
   end
 end

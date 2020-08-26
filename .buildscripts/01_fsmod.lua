@@ -7,7 +7,7 @@ local function select_fs()
   local mods = menu(fses)
 
   for k,v in pairs(mods) do
-    log("Adding filesystem driver:", v)
+    log(prg, "Adding filesystem driver:", v)
     for kk, vv in pairs(CONFIG.modules.fs) do
       if v ~= vv then
         table.insert(CONFIG.modules.fs, v)

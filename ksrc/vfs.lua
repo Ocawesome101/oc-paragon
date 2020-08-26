@@ -55,6 +55,11 @@ do
   end
   
   function vfs.mounts()
+    local ret = {}
+    for k, v in pairs(mnt) do
+      ret[v.address] = k
+    end
+    return ret
   end
 
   function vfs.umount()

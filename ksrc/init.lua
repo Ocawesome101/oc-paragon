@@ -19,4 +19,5 @@
 --#include "ksrc/kdrv.lua"
 --#include "ksrc/process.lua"
 --#include "ksrc/kapi.lua"
+--#include "ktmp/exec.lua"
 --#include "ktmp/misc.lua"

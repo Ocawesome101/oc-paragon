@@ -6,6 +6,8 @@ CONFIG = {
     },
     net = {
     },
+    exec = {
+    },
     misc = {
     }
   }
