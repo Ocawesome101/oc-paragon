@@ -18,6 +18,7 @@ local taken = {
 local args, opts = getopt(rawargs, taken)
 
 local target = opts.t or opts.target or "all"
+local allmod = opts.d or opts.default or false
 
 -- provides globals used in other scripts
 _G.build = {}
@@ -47,6 +48,10 @@ end
 for _, file in ipairs(ls(".buildscripts")) do
   log(file)
   dofile(".buildscripts/"..file)
+end
+
+if allmod then
+  CONFIG.all_modules = true
 end
 
 if build[target] then

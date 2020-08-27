@@ -1,5 +1,6 @@
-do
+kio.dmesg(kio.loglevels.INFO, "ksrc/misc/ec25519.lua")
 
+do
 -- Copyright (c) 2015  Phil Leblanc  -- see LICENSE file
 
 ------------------------------------------------------------

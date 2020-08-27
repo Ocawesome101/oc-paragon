@@ -1,5 +1,7 @@
 -- UUID module. UUID implementation copied from OpenOS
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/misc/uuid.lua")
+
 do
   k.uuid = {}
 

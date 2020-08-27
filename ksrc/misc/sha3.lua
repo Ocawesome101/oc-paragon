@@ -1,3 +1,5 @@
+kio.dmesg(kio.loglevels.INFO, "ksrc/misc/sha3.lua")
+
 do
 -- Copyright (c) 2014  Joseph Wallace
 -- Copyright (c) 2015  Phil Leblanc

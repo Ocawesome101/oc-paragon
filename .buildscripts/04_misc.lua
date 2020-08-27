@@ -4,7 +4,12 @@ local function select_mods()
   local mods = ls("ksrc/misc")
   local prg = p()
   log(prg, "Select misc modules")
-  local add = menu(mods)
+  local add
+  if CONFIG.all_modules then
+    add = mods
+  else
+    add = menu(mods)
+  end
 
   for k,v in pairs(add) do
     log(prg, "Adding misc module:", v)

@@ -1,5 +1,6 @@
-do
+kio.dmesg(kio.loglevels.INFO, "ksrc/misc/sha2.lua")
 
+do
 -- Copyright (c) 2018  Phil Leblanc  -- see LICENSE file
 ------------------------------------------------------------------------
 

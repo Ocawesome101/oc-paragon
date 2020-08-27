@@ -1,5 +1,7 @@
 -- vfs
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/vfs.lua")
+
 -- TODO: mount system is currently pretty basic.
 local vfs = {}
 do
@@ -32,6 +34,13 @@ do
   -- XXX: vfs.resolve does NOT check if a file exists.
   function vfs.resolve(path)
     checkArg(1, path, "string")
+    if path == "/" then
+      if mounts["/"] then
+        return mounts["/"]
+      else
+        return nil, "root filesystem not mounted"
+      end
+    end
     local segs = segments(path)
     for i=#segs, 1, -1 do
       local retpath = "/" .. table.concat(segs, "/", i, #segs)
@@ -47,10 +56,10 @@ do
     checkArg(1, prx, "table")
     checkArg(2, path, "string")
     path = "/" .. table.concat(segments(path), "/")
-    if mounts[path] then
+    if mnt[path] then
       return nil, "there is already a filesystem mounted there"
     end
-    mounts[path] = prx
+    mnt[path] = prx
     return true
   end
   
@@ -62,6 +71,13 @@ do
     return ret
   end
 
-  function vfs.umount()
+  function vfs.umount(path)
+    checkArg(1, path, "string")
+    path = "/" .. table.concat(segments(path), "/")
+    if not mns[path] then
+      return nil, "no such device"
+    end
+    mns[path] = nil
+    return true
   end
 end

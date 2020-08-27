@@ -1,13 +1,14 @@
 -- basic event listeners
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/misc/event.lua")
+
 do
   local event = {}
   local listeners = {}
   local ps = computer.pullSignal
 
   function computer.pullSignal(timeout)
-    checkArg(1, timeout, "number")
-    local max = computer.uptime() + timeout
+    checkArg(1, timeout, "number", "nil")
 
     local sig = table.pack(ps(timeout))
     if sig.n > 0 then

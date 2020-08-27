@@ -2,7 +2,7 @@
 
 kio = {}
 
-kargs.loglevel = tonumber(kargs.loglevel) or 1
+kargs.loglevel = tonumber(kargs.loglevel) or 0
 
 kio.errors = {
   FILE_NOT_FOUND = "no such file or directory",
@@ -20,7 +20,7 @@ kio.loglevels = {
   INFO    = 1,
   WARNING = 2,
   ERROR   = 3,
-  PANIC   = 4.
+  PANIC   = 4
 }
 
 kio.levels = {
@@ -32,8 +32,8 @@ kio.levels = {
 }
 
 -- template stream
-local _stream = {}
-function _stream:pipe(n)
+local _pipe = {}
+function _pipe:read(n)
   checkArg(1, n, "number", "string", "nil")
   if type(n) == "string" then n = n:gsub("%*", "") end
   if self.closed and #self.buf == 0 then return nil end
@@ -91,6 +91,7 @@ do
   local y = 0
   local w, h = gpu.maxResolution()
   gpu.setResolution(w, h)
+  gpu.fill(1, 1, w, h, " ")
   function console(msg)
     if y == h then
       gpu.copy(1, 1, w, h, 0, -1)
@@ -110,7 +111,7 @@ end
 
 function kio.dmesg(level, msg)
   local mesg = string.format("[%.2f] [%s] %s", computer.uptime(), kio.levels[level], msg)
-  if level > kio.loglevel then
+  if level >= kargs.loglevel then
     kio.console(mesg)
   end
   table.insert(dmesg, mesg)
@@ -132,9 +133,11 @@ do
       kio.dmesg(kio.loglevels.PANIC, line)
     end
     kio.dmesg(kio.loglevels.PANIC, "Kernel panic!")
-    computer.beep(1)
+    computer.beep(440, 1)
     while true do
       panic()
     end
   end
 end
+
+kio.dmesg(kio.loglevels.INFO, string.format("Starting %s version %s - built %s by %s", _KINFO.name, _KINFO.version, _KINFO.built, _KINFO.builder))

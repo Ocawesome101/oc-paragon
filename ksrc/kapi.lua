@@ -1,5 +1,6 @@
 -- kernel api
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/kapi.lua")
 k = {}
 k.args    = kargs
 k.io      = kio

@@ -1,5 +1,7 @@
 -- scheduler part 1: process template
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/process.lua")
+
 local process = {}
 
 local signals = {

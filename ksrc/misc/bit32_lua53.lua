@@ -1,5 +1,7 @@
 -- bi32 module for Lua 5.3
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/misc/bit32_lua53.lua")
+
 do
   if tonumber(_VERSION:match("5%.(.)")) > 2 then -- if we aren't on 5.3+ then don't do anything
     -- loaded from a string so this will still parse on Lua 5.3

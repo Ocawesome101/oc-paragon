@@ -14,10 +14,13 @@
 ]]
 
 --#include "ksrc/kargs.lua"
---#include "ksrc/kinfo.lua"
+--#include "ktmp/kinfo.lua"
 --#include "ksrc/kio.lua"
 --#include "ksrc/kdrv.lua"
+--#include "ksrc/vfs.lua"
 --#include "ksrc/process.lua"
 --#include "ksrc/kapi.lua"
 --#include "ktmp/exec.lua"
 --#include "ktmp/misc.lua"
+--#include "ksrc/iramfs.lua"
+while true do computer.pullSignal() end

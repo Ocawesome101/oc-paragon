@@ -4,7 +4,12 @@ local function select_fs()
   local fses = ls("ksrc/fs")
   local prg = p()
   log(prg, "Select filesystem drivers")
-  local mods = menu(fses)
+  local mods
+  if CONFIG.all_modules then
+    mods = fses
+  else
+    mods = menu(fses)
+  end
 
   for k,v in pairs(mods) do
     log(prg, "Adding filesystem driver:", v)

@@ -34,9 +34,12 @@ function preproc.line(line) -- string -- -- Returns either a function - which ca
    error("unknown preprocessor directive: "..directive)
   end
  elseif line:match("@%[%{(.-)%}%]") then -- this directive was added by Ocawesome101
-  local expr = line:match("@%[%{(.-)%}%]")
-  local ok, err = assert(load("return " .. expr, "=@[{directive}]", "bt", _G))
-  line = line:gsub("@%[%{"..expr.."%}%]", tostring(assert(ok())))
+  for expr in line:gmatch("@%[%{(.-)%}%]") do
+   print(expr)
+   local ok, err = load("return " .. expr, "=@[{directive}]", "bt", _G)
+   assert(ok, err or "expression " .. expr .. " returned nil!")
+   line = line:gsub("@%[%{"..expr.."%}%]", tostring(ok()))
+  end
   return line
  else
   return line

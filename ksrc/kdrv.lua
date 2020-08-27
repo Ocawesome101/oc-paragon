@@ -1,5 +1,7 @@
 -- kernel drivers
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/kdrv.lua")
+
 kdrv = {}
 
 kdrv.fs = {}

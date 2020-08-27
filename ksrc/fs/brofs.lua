@@ -161,7 +161,7 @@ do
   end
 
   function drv.create(prx, label) -- takes an unmanaged drive (or a partition / file wrapper) and returns a BROFS interface
-    kio.dmesg(3, "reading BROFS file table")
+    kio.dmesg(kio.loglevels.DEBUG, "reading BROFS file table")
     local ftbl = ""
     ftbl = readSectors(prx, 1, 2)
     local ftable = {}
