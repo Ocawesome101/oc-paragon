@@ -23,4 +23,6 @@
 --#include "ktmp/exec.lua"
 --#include "ktmp/misc.lua"
 --#include "ksrc/iramfs.lua"
-while true do computer.pullSignal() end
+--#include "ksrc/mods.lua"
+--#include "ksrc/fstab.lua"
+kio.panic("premature exit!")

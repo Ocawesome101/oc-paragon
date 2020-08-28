@@ -27,7 +27,7 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.0.1",
-  built   = "2020/08/26",
+  built   = "2020/08/27",
   builder = "ocawesome101@archlinux"
 }
 
@@ -205,7 +205,7 @@ do
   end
 
   local function strip(t)
-    return t:gsub("/", "")
+    return t:gsub("/+", "")
   end
 
   function temp:spaceUsed()
@@ -225,6 +225,7 @@ do
     checkArg(1, file, "string")
     checkArg(2, mode, "string", "nil")
     file = strip(file)
+    kio.dmesg(kio.loglevels.DEBUG, "tryopen "..file)
     if self.ftable[file] then
       local new = {
         ptr = 0,
@@ -233,6 +234,7 @@ do
       local n = hn + 1
       hn = n
       self.handles[n] = new
+      kio.dmesg(kio.loglevels.DEBUG, "opened as " ..n)
       return n
     else
       return kio.error("FILE_NOT_FOUND")
@@ -242,7 +244,7 @@ do
   function temp:read(h, n)
     checkArg(1, h, "number")
     checkArg(2, n, "number")
-    if not self.handles(h) then
+    if not self.handles[h] then
       return nil, "bad file descriptor"
     end
     h = self.handles[h]
@@ -252,8 +254,10 @@ do
     if h.ptr + n >= h.file.size then
       n = h.file.size - h.ptr
     end
-    local approx = readSectors(self.dev, h.file.start + h.ptr // 512, h.file.start + h.ptr // 512 + math.ceil(n + 512))
-    local t = (h.ptr - h.ptr // 512 * 512)
+    local s, e = h.file.start + (h.ptr // 512), h.file.start + (h.ptr // 512) + (n // 512)
+    local approx = readSectors(self.dev, s, e)
+    local t = (h.ptr - ((h.ptr // 512) * 512))
+    h.ptr = h.ptr + n
     local data = approx:sub(t, t + n)
     return data
   end
@@ -312,7 +316,7 @@ do
   function temp:list()
     local files = {}
     for k, v in pairs(self.ftable) do
-      table.insert(files, v)
+      table.insert(files, k)
     end
     return files
   end
@@ -353,16 +357,23 @@ do
     ftbl = readSectors(prx, 1, 2)
     local ftable = {}
     local inpack = "<I2I2I2I1I1c24"
-    local inpat = string.rep(".", 32)
-    for seg in ftbl:gmatch(inpat) do
+    for i=1, 32, 1 do
+      local n = (i - 1) * 32
+      if n == 0 then n = 1 end
+      kio.dmesg(kio.loglevels.DEBUG, n.." "..n+31)
+      local seg = ftbl:sub(n, n + 31)
       local start, size, prealloc, flags, _, fname = string.unpack(inpack, seg)
+      kio.dmesg(kio.loglevels.DEBUG, "BROFS: "..table.concat({start,size,fname}," "))
       if flags == 0 then
+        kio.dmesg(kio.loglevels.DEBUG, "BROFS: file flags < 1")
         break
       end
+      -- rid us of trailing \0s in the filename
+      fname = fname:gsub("\0", "")
       -- file size is stored in approximate sectors but we need the exact count
-      local last = prx.readSector(size)
+      local last = prx.readSector(start + size - 1)
       last = last:gsub("\0", "")
-      local xsize = size * 512 - last
+      local xsize = (size - 1) * 512 + #last
       local ent = {
         start = start,
         size = xsize,
@@ -371,7 +382,7 @@ do
       }
       ftable[fname] = ent
     end
-    return setmetatable({dev = prx, ftable = ftable, label = label or (prx.getLabel and prx.getLabel()) or "BROFS"}, {__index = temp})
+    return setmetatable({dev = prx, ftable = ftable, handles = {}, label = label or (prx.getLabel and prx.getLabel()) or "BROFS"}, {__index = temp})
   end
 
   kdrv.fs.brofs = drv
@@ -449,6 +460,14 @@ do
   -- XXX: vfs.resolve does NOT check if a file exists.
   function vfs.resolve(path)
     checkArg(1, path, "string")
+    kio.dmesg(kio.loglevels.DEBUG, "vfs: resolve "..path)
+    if path == "/" then
+      if mnt["/"] then
+        return mnt["/"], ""
+      else
+        return nil, "root filesystem not mounted"
+      end
+    end
     local segs = segments(path)
     for i=#segs, 1, -1 do
       local retpath = "/" .. table.concat(segs, "/", i, #segs)
@@ -456,6 +475,9 @@ do
       if mnt[try] then
         return mnt[try], retpath
       end
+    end
+    if path:sub(1,1)~="/" then
+      return vfs.resolve("/"), path
     end
     return kio.error("FILE_NOT_FOUND")
   end
@@ -1565,19 +1587,19 @@ end
 kio.dmesg(kio.loglevels.INFO, "ksrc/iramfs.lua")
 
 do
-  local fs = kargs.root or (computer.getBootAddress and computer.getBootAddress()) or kio.panic("neither root=? nor computer.getBootAddress present")
+  local fs = kargs.boot or (computer.getBootAddress and computer.getBootAddress()) or kio.panic("neither boot=? nor computer.getBootAddress present")
 
   local pspec, addr, pn = fs:match("(.+)%((.+),(%d+)%)")
   addr = addr or fs:gsub("[^%w%-]+", "")
   if not component.type(fs) then
-    kio.panic("invalid rootfs specification " .. fs .. " (got " .. addr .. ")")
+    kio.panic("invalid bootfs specification " .. fs .. " (got " .. addr .. ")")
   end
   if component.type(addr) == "drive" then -- unmanaged, read partition table as specified
     if not pspec then
       kio.dmesg(kio.loglevels.WARNING, "no partitioning scheme specified!")
       kio.dmesg(kio.loglevels.WARNING, "defaulting to full drive as filesystem!")
     end
-    if not kdrv.fs[pspec] then
+    if pspec and not kdrv.fs[pspec] then
       kio.panic("missing driver for partitioning scheme " .. pspec .. "!")
     end
   elseif component.type(addr) == "filesystem" then -- managed
@@ -1594,7 +1616,11 @@ do
     -- TODO: or maybe it isn't a big deal and people will just load from drives
     -- TODO: like intended.
     function fake.readSector(s)
-      local handle = temp.open("pinitfs.img", "r")
+      local handle, err = temp.open("pinitfs.img", "r")
+      if not handle then
+        kio.dmesg(kio.loglevels.DEBUG, "fakedrv: "..err)
+      end
+      s = (s - 1) * 512
       local ok, err = temp.seek(handle, "set", s)
       if not ok then
         temp.close(handle)
@@ -1612,8 +1638,84 @@ do
     kio.dmesg(kio.loglevels.INFO, "mounting initfs at /")
     vfs.mount(idisk, "/")
   else
-    kio.panic("invalid rootfs specification:\n  component is not 'drive' or 'filesystem'")
+    kio.panic("invalid bootfs specification:\n  component is not 'drive' or 'filesystem'")
   end
 end
 
-while true do computer.pullSignal() end
+-- load modules in order from initfs/mod*.lua
+
+kio.dmesg(kio.loglevels.INFO, "ksrc/mods.lua")
+
+-- basic loadfile implementation
+function loadfile(file)
+  checkArg(1, file, "string")
+  kio.dmesg(kio.loglevels.DEBUG, "loadfile: "..file)
+  local node, path = vfs.resolve(file)
+  if not node then
+    kio.dmesg(kio.loglevels.DEBUG, "loadfile: "..path)
+    return nil, path
+  end
+  local handle, err = node:open(path, "r")
+  if not handle then
+    kio.dmesg(kio.loglevels.DEBUG, "loadfile: "..err)
+    return nil, err
+  end
+  local data = ""
+  repeat
+    local chunk, err = node:read(handle, math.huge)
+    if not chunk and err then
+      node:close(handle)
+      kio.dmesg(kio.loglevels.DEBUG, "loadfile: "..err)
+      return nil, err
+    end
+    data = data .. (chunk or "")
+  until not chunk
+  node:close(handle)
+  return load(data, "=" .. file, "bt", _G)
+end
+
+do
+  local rootfs, err = vfs.resolve("/")
+  if not rootfs then
+    kio.panic(err)
+  end
+  local files = rootfs:list("/")
+  table.sort(files)
+  kio.dmesg(kio.loglevels.DEBUG, "loading modules from initfs")
+  for i=1, #files, 1 do
+    kio.dmesg(kio.loglevels.DEBUG, files[i])
+    if files[i]:sub(1,3) == "mod" and files[i]:sub(-4) == ".lua" then
+      local ok, err = loadfile(files[i])
+      if not ok then
+        kio.dmesg(kio.loglevels.ERROR, files[i]..": "..err)
+      else
+        local ok, ret = pcall(ok)
+        if not ok then
+          kio.dmesg(kio.loglevels.ERROR, files[i]..": "..err)
+        end
+      end
+    end
+  end
+end
+
+-- load the fstab from the initfs and mount filesystems accordingly
+-- from here on we work with the real rootfs, not the initfs
+
+do
+  local ifs, p = vfs.resolve("/fstab")
+  if not ifs then
+    kio.panic(p)
+  end
+  local handle = ifs:open("fstab")
+  local data = ""
+  repeat
+    local chunk = ifs:read(handle, math.huge)
+    data = data .. (chunk or "")
+  until not chunk
+  ifs:close(handle)
+  for line in data:gmatch("[^\n]+") do
+    local partspec, path, fsspec, mode = line:match("(.-)%s+(.-)%s+(.-)%s+(.-)")
+  end
+end
+
+kio.panic("premature exit!")

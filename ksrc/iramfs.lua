@@ -3,19 +3,19 @@
 kio.dmesg(kio.loglevels.INFO, "ksrc/iramfs.lua")
 
 do
-  local fs = kargs.root or (computer.getBootAddress and computer.getBootAddress()) or kio.panic("neither root=? nor computer.getBootAddress present")
+  local fs = kargs.boot or (computer.getBootAddress and computer.getBootAddress()) or kio.panic("neither boot=? nor computer.getBootAddress present")
 
   local pspec, addr, pn = fs:match("(.+)%((.+),(%d+)%)")
   addr = addr or fs:gsub("[^%w%-]+", "")
   if not component.type(fs) then
-    kio.panic("invalid rootfs specification " .. fs .. " (got " .. addr .. ")")
+    kio.panic("invalid bootfs specification " .. fs .. " (got " .. addr .. ")")
   end
   if component.type(addr) == "drive" then -- unmanaged, read partition table as specified
     if not pspec then
       kio.dmesg(kio.loglevels.WARNING, "no partitioning scheme specified!")
       kio.dmesg(kio.loglevels.WARNING, "defaulting to full drive as filesystem!")
     end
-    if not kdrv.fs[pspec] then
+    if pspec and not kdrv.fs[pspec] then
       kio.panic("missing driver for partitioning scheme " .. pspec .. "!")
     end
   elseif component.type(addr) == "filesystem" then -- managed
@@ -32,7 +32,11 @@ do
     -- TODO: or maybe it isn't a big deal and people will just load from drives
     -- TODO: like intended.
     function fake.readSector(s)
-      local handle = temp.open("pinitfs.img", "r")
+      local handle, err = temp.open("pinitfs.img", "r")
+      if not handle then
+        kio.dmesg(kio.loglevels.DEBUG, "fakedrv: "..err)
+      end
+      s = (s - 1) * 512
       local ok, err = temp.seek(handle, "set", s)
       if not ok then
         temp.close(handle)
@@ -50,6 +54,6 @@ do
     kio.dmesg(kio.loglevels.INFO, "mounting initfs at /")
     vfs.mount(idisk, "/")
   else
-    kio.panic("invalid rootfs specification:\n  component is not 'drive' or 'filesystem'")
+    kio.panic("invalid bootfs specification:\n  component is not 'drive' or 'filesystem'")
   end
 end

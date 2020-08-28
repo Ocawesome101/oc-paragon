@@ -8,6 +8,10 @@ Arguments may NOT contain spaces.
 
 This argument selects a partition to use as the root device.  For example, `ocgpt(74792ddf-e603-43e3-bd71-c066c416d798,3)` for the third partition in the OCGPT of the drive with address `74792ddf-e603-43e3-bd71-c066c416d798`.
 
+## boot=PARTSPEC
+
+This argument specifies a partition to use as the boot device, i.e. where `pinitfs.img` is stored. The filesystem must be either managed or BROFS.
+
 ## loglevel=NUM
 
 Sets the log level. All messages with a value smaller than the specified NUM will be printed to the console. Levels:

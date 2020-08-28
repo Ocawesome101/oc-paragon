@@ -18,7 +18,7 @@ do
   end
 
   local function strip(t)
-    return t:gsub("/", "")
+    return t:gsub("/+", "")
   end
 
   function temp:spaceUsed()
@@ -38,6 +38,7 @@ do
     checkArg(1, file, "string")
     checkArg(2, mode, "string", "nil")
     file = strip(file)
+    kio.dmesg(kio.loglevels.DEBUG, "tryopen "..file)
     if self.ftable[file] then
       local new = {
         ptr = 0,
@@ -46,6 +47,7 @@ do
       local n = hn + 1
       hn = n
       self.handles[n] = new
+      kio.dmesg(kio.loglevels.DEBUG, "opened as " ..n)
       return n
     else
       return kio.error("FILE_NOT_FOUND")
@@ -55,7 +57,7 @@ do
   function temp:read(h, n)
     checkArg(1, h, "number")
     checkArg(2, n, "number")
-    if not self.handles(h) then
+    if not self.handles[h] then
       return nil, "bad file descriptor"
     end
     h = self.handles[h]
@@ -65,8 +67,10 @@ do
     if h.ptr + n >= h.file.size then
       n = h.file.size - h.ptr
     end
-    local approx = readSectors(self.dev, h.file.start + h.ptr // 512, h.file.start + h.ptr // 512 + math.ceil(n + 512))
-    local t = (h.ptr - h.ptr // 512 * 512)
+    local s, e = h.file.start + (h.ptr // 512), h.file.start + (h.ptr // 512) + (n // 512)
+    local approx = readSectors(self.dev, s, e)
+    local t = (h.ptr - ((h.ptr // 512) * 512))
+    h.ptr = h.ptr + n
     local data = approx:sub(t, t + n)
     return data
   end
@@ -125,7 +129,7 @@ do
   function temp:list()
     local files = {}
     for k, v in pairs(self.ftable) do
-      table.insert(files, v)
+      table.insert(files, k)
     end
     return files
   end
@@ -166,16 +170,23 @@ do
     ftbl = readSectors(prx, 1, 2)
     local ftable = {}
     local inpack = "<I2I2I2I1I1c24"
-    local inpat = string.rep(".", 32)
-    for seg in ftbl:gmatch(inpat) do
+    for i=1, 32, 1 do
+      local n = (i - 1) * 32
+      if n == 0 then n = 1 end
+      kio.dmesg(kio.loglevels.DEBUG, n.." "..n+31)
+      local seg = ftbl:sub(n, n + 31)
       local start, size, prealloc, flags, _, fname = string.unpack(inpack, seg)
+      kio.dmesg(kio.loglevels.DEBUG, "BROFS: "..table.concat({start,size,fname}," "))
       if flags == 0 then
+        kio.dmesg(kio.loglevels.DEBUG, "BROFS: file flags < 1")
         break
       end
+      -- rid us of trailing \0s in the filename
+      fname = fname:gsub("\0", "")
       -- file size is stored in approximate sectors but we need the exact count
-      local last = prx.readSector(size)
+      local last = prx.readSector(start + size - 1)
       last = last:gsub("\0", "")
-      local xsize = size * 512 - last
+      local xsize = (size - 1) * 512 + #last
       local ent = {
         start = start,
         size = xsize,
@@ -184,7 +195,7 @@ do
       }
       ftable[fname] = ent
     end
-    return setmetatable({dev = prx, ftable = ftable, label = label or (prx.getLabel and prx.getLabel()) or "BROFS"}, {__index = temp})
+    return setmetatable({dev = prx, ftable = ftable, handles = {}, label = label or (prx.getLabel and prx.getLabel()) or "BROFS"}, {__index = temp})
   end
 
   kdrv.fs.brofs = drv

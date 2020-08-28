@@ -34,9 +34,10 @@ do
   -- XXX: vfs.resolve does NOT check if a file exists.
   function vfs.resolve(path)
     checkArg(1, path, "string")
+    kio.dmesg(kio.loglevels.DEBUG, "vfs: resolve "..path)
     if path == "/" then
-      if mounts["/"] then
-        return mounts["/"]
+      if mnt["/"] then
+        return mnt["/"], ""
       else
         return nil, "root filesystem not mounted"
       end
@@ -48,6 +49,9 @@ do
       if mnt[try] then
         return mnt[try], retpath
       end
+    end
+    if path:sub(1,1)~="/" then
+      return vfs.resolve("/"), path
     end
     return kio.error("FILE_NOT_FOUND")
   end
