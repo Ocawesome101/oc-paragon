@@ -13,6 +13,8 @@ CONFIG = {
   }
 }
 
+local tui = require("lib.tui")
+
 local function prompt(msg)
   local ret = ""
   while not ret:match("%d") do
@@ -28,7 +30,7 @@ function p()
   return string.format("(%d/%d)", n - 1, #build)
 end
 
-function menu(opts)
+--[[function menu(opts)
   for i=1, #opts, 1 do
     print(string.format("%d. %s", i, opts[i]))
   end
@@ -40,6 +42,20 @@ function menu(opts)
     end
   end
   return sel
+end]]
+
+function menu(opts)
+  local items = {}
+  for i=1, #opts, 1 do
+    items[i] = {text = opts[i], selectable = true}
+  end
+  local sel = tui.menu(items)
+  local ret = {}
+  for k, v in pairs(sel) do
+    table.insert(ret, opts[k])
+  end
+  io.write("\27[0m\27[2J\27[1;1H")
+  return ret
 end
 
 rm("ktmp")
