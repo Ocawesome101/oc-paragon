@@ -112,6 +112,7 @@ do
   function temp:exists(file)
     checkArg(1, file, "string")
     file = strip(file)
+    kio.dmesg(kio.loglevels.DEBUG, "exists", file)
     if self.ftable[file] then
       return true
     end
@@ -171,7 +172,7 @@ do
     local ftable = {}
     local inpack = "<I2I2I2I1I1c24"
     for i=1, 32, 1 do
-      local n = (i - 1) * 32
+      local n = (i - 1) * 32 + 1
       if n == 0 then n = 1 end
       kio.dmesg(kio.loglevels.DEBUG, n.." "..n+31)
       local seg = ftbl:sub(n, n + 31)

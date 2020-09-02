@@ -25,4 +25,5 @@
 --#include "ksrc/iramfs.lua"
 --#include "ksrc/mods.lua"
 --#include "ksrc/fstab.lua"
+--#include "ksrc/tty.lua"
 kio.panic("premature exit!")

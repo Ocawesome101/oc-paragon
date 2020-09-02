@@ -50,9 +50,10 @@ do
         return mnt[try], retpath
       end
     end
-    if path:sub(1,1)~="/" then
+    if path:sub(1,1)=="/" then
       return vfs.resolve("/"), path
     end
+    kio.dmesg(kio.loglevels.DEBUG, "no such file: ".. path)
     return kio.error("FILE_NOT_FOUND")
   end
 
