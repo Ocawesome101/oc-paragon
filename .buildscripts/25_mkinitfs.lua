@@ -5,7 +5,7 @@ local function gen()
   local pat = "<I2I2I2I1I1c24"
   log(prg, "Generating initfs")
   local files = ls("initfs")
-  local out = io.open("ktmp/pinitfs.img", "w")
+  local out = io.open("build/pinitfs.img", "w")
   local ftbl = ""
   local flags = 1
   local start = 3

@@ -78,6 +78,7 @@ do
     table.insert(palette, pack(i,i,i))
   end
   local min, max = math.min, math.max
+  -- vt.emu takes a gpu and screen address and returns a (non-buffered!) stream
   function vt.new(gpu, screen)
     checkArg(1, gpu, "string")
     checkArg(2, screen, "string")
@@ -94,7 +95,8 @@ do
     local rb = ""
     local wb = ""
     local nb = ""
-    local ex = true -- local echo
+    local ec = true -- local echo
+    local lm = true -- line mode
     local cx, cy = 0, 0
     local fg, bg = colors[8], colors[1]
     local w, h = gpu.maxResolution()
@@ -121,8 +123,15 @@ do
       end
     end
 
+    local stream = {}
+
     local p = {}
-    local function write(str)
+    function stream:write(str)
+      checkArg(1, str, "string")
+      if self.closed then
+        return kio.error("IO_ERROR")
+      end
+      str = str:gsub("\8", "\27[D")
       local _c = gpu.get(cx, cy)
       gpu.setForeground(fg)
       gpu.setBackground(bg)
@@ -136,6 +145,8 @@ do
           elseif c == "\27" then
             flush()
             mode = 1
+          elseif c == "\7" then -- ascii BEL
+            computer.beep(".")
           else
             wb = wb .. c
           end
@@ -241,27 +252,36 @@ do
                   icc = 0
                   icv = 0
                   icn = 0
-                  if n == 0 then
+                  if n == 0 then -- reset terminal attributes
                     fg, bg = colors[8], colors[1]
                     ec = true
-                  elseif n == 8 then
+                    lm = true
+                  elseif n == 8 then -- disable local echo
                     ec = false
-                  elseif n == 28 then
+                  elseif n == 28 then -- enable local echo
                     ec = true
-                  elseif n > 29 and n < 38 then
+                  elseif n > 29 and n < 38 then -- foreground color
                     fg = colors[n - 29]
-                  elseif n > 39 and n < 48 then
+                  elseif n > 39 and n < 48 then -- background color
                     bg = colors[n - 39]
-                  elseif n == 38 then
+                  elseif n == 38 then -- 256/24-bit color, foreground
                     ic = true
                     icv = 0
-                  elseif n == 48 then
+                  elseif n == 48 then -- 256/24-bit color, background
                     ic = true
                     icv = 1
-                  elseif n == 39 then
+                  elseif n == 39 then -- default foreground
                     fg = colors[8]
-                  elseif n == 49 then
+                  elseif n == 49 then -- default background
                     bg = colors[1]
+                  elseif n > 89 and n < 98 then -- bright foreground
+                    fg = bright[n - 89]
+                  elseif n > 99 and n < 108 then -- bright background
+                    bg = bright[n - 99]
+                  elseif n == 108 then -- disable line mode
+                    lm = false
+                  elseif n == 128 then -- enable line mode
+                    lm = true
                   end
                 end
               end
@@ -272,11 +292,80 @@ do
             end
           end
         end
+        flushwb()
+        checkCursor()
+        local _c, f, b = gpu.get(cx, cy)
+        gpu.setForeground(b)
+        gpu.setBackground(f)
+        gpu.set(cx, cy, _c)
+        gpu.setForeground(fg)
+        gpu.setBackground(bg)
+        return true
       end
     end
+
     -- read() returns characters from the input buffer
-    local function read()
+    function stream:read(n)
+      checkArg(1, n, "number", "nil")
+      if self.closed then
+        return nil
+      end
+      if n == math.huge then
+        rb = ""
+        return rb
+      end
+      if n and lm then
+        while (unicode.len(rb) < n) do
+          coroutine.yield()
+        end
+      else
+        n = n or 0
+        while not (unicode.len(rb) < n and rb:find("\n")) do
+          coroutine.yield()
+        end
+      end
+      n = n or rb:find("\n")
+      local ret = rb:sub(1, n)
+      rb = rb:sub(n + 1)
+      return ret
     end
+    
+    local sub = {
+      [200] = "\27[A",
+      [201] = "\27[5~",
+      [209] = "\27[6~",
+      [203] = "\27[D",
+      [205] = "\27[C",
+      [208] = "\27[B"
+    }
+    -- key input listener. this is a kernel event listener, so it should be
+    -- faster than using a thread, especially per-terminal.
+    local function listener(sig, addr, char, code)
+      if addr == screen then
+        if char == 0 then
+          char = sub[code] or ""
+        elseif char == 8 and lm then
+          rb = unicode.sub(rb, 1, unicode.len(rb) - 1)
+          stream:write("\8 \8")
+          return true
+        else
+          char = unicode.char(char)
+        end
+        rb = rb .. char
+        stream:write((char:gsub("\27", "^")))
+      end
+    end
+
+    local id = k.evt.register("key_down", listener)
+    -- we should unregister the listener when the terminal stream is closed to
+    -- help memory usage and responsiveness
+    function stream:close()
+      self.closed = true
+      k.evt.unregister(id)
+      return true
+    end
+
+    return stream
   end
   k.vt = vt
 end

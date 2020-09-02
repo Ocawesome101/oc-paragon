@@ -7,7 +7,7 @@ local function getopt(args, argdefs)
     if def.takesarg then
       local try = args[i + 1]
       if def.reqarg and not try then
-        error("getopt: missing argument for option " .. opt)
+        error("getopt: missing argument for option " .. opt, 0)
       end
       parsed_opts[opt] = try or parsed_opts[opt] or true
       i = i + 1

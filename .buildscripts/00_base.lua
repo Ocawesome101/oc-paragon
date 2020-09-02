@@ -9,6 +9,7 @@ CONFIG = {
     exec = {
     },
     misc = {
+      "event.lua"
     }
   }
 }
@@ -60,3 +61,5 @@ end
 
 rm("ktmp")
 mkdir("ktmp")
+rm("build")
+mkdir("build")

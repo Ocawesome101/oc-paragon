@@ -7,15 +7,15 @@ local vfs = {}
 do
   local mnt = {}
 
-  -- expected procedure:
-  -- 1. use vfs.resolve to resolve a filepath to a proxy and a path on the proxy
-  -- 2. operate on the proxy
-  -- the vfs api does not provide all available filesystem functions. see
-  -- 'misc/fsapi.lua' for an api that does.
-  -- note that while running a kernel without the fsapi module, you'll need to
-  -- either assign it as an initrd module or set 'security.uspace_vfs=1' in the
-  -- kernel command line to allow userspace to access the vfs api (not
-  -- recommended!).
+  --[[ expected procedure:
+     1. use vfs.resolve to resolve a filepath to a proxy and a path on the proxy
+     2. operate on the proxy
+     the vfs api does not provide all available filesystem functions; see
+     'misc/fsapi.lua' for an api that does.
+     note that while running a kernel without the fsapi module, you'll need to
+     either assign it as an initrd module or set 'security.uspace_vfs=1' in the
+     kernel command line to allow userspace to access the vfs api (not
+     recommended!). ]]
 
   local function segments(path)
     local segs = {}
@@ -84,5 +84,14 @@ do
     end
     mns[path] = nil
     return true
+  end
+
+  function vfs.stat(file)
+    checkArg(1, file, "string")
+    local node, path = vfs.resolve(file)
+    if not node then
+      return nil, path
+    end
+    return node:stat(path)
   end
 end

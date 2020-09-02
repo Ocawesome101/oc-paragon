@@ -1,3 +1,4 @@
+--#include "ksrc/misc/event.lua"
 --#include "ksrc/misc/bit32_lua53.lua"
 --#include "ksrc/misc/ec25519.lua"
 --#include "ksrc/misc/event.lua"

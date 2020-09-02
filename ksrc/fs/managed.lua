@@ -20,6 +20,12 @@ do
     end
   })
   
+  function default:stat(file)
+    return {
+      permissions = self:isReadOnly() and 292 or 438
+    }
+  end
+  
   function drv.create(prx)
     return setmetatable({dev = prx}, {__index = default})
   end

@@ -81,6 +81,7 @@ end
 -- temporary log buffer until we get a root filesystem
 local dmesg = {}
 
+local console
 do
   -- calling console() writes a line. that's it.
   local ac = kargs.console or ""
@@ -92,7 +93,9 @@ do
   local w, h = gpu.maxResolution()
   gpu.setResolution(w, h)
   gpu.fill(1, 1, w, h, " ")
-  function console(msg)
+  gpu.setForeground(0xaaaaaa)
+  gpu.setBackground(0x000000)
+  console = function(msg)
     if y == h then
       gpu.copy(1, 1, w, h, 0, -1)
       gpu.fill(1, h, w, 1, " ")
@@ -110,7 +113,7 @@ function kio.error(err)
 end
 
 function kio.dmesg(level, msg)
-  local mesg = string.format("[%.2f] [%s] %s", computer.uptime(), kio.levels[level], msg)
+  local mesg = string.format("[%5.05f] [%s] %s", computer.uptime(), kio.levels[level], msg)
   if level >= kargs.loglevel then
     kio.console(mesg)
   end
@@ -126,7 +129,7 @@ do
     while true do
       local info = debug.getinfo(i)
       if not info then break end
-      traceback = traceback .. string.format("\n  %s:%s: in %s'%s':", info.source:sub(2), info.currentline or "C", (info.namewhat ~= "" and info.namewhat .. " ") or "", info.name or "?")
+      traceback = traceback .. string.format("\n  %s:%s: in %s'%s':", info.source:gsub("=*",""), info.currentline or "C", (info.namewhat ~= "" and info.namewhat .. " ") or "", info.name or "?")
       i = i + 1
     end
     for line in traceback:gmatch("[^\n]+") do

@@ -127,6 +127,13 @@ do
     return 0
   end
 
+  function temp:stat()
+    return {
+      permissions = 292, -- 100100100, r--r--r--
+      -- TODO: possibly more fields?
+    }
+  end
+
   function temp:list()
     local files = {}
     for k, v in pairs(self.ftable) do

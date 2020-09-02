@@ -9,7 +9,7 @@ local function pad(s, w)
 end
 
 local function fill(tx, ty, w, h)
-  local ln = term.color(pad(" ", w), nil, term.colors.bg.bright.white)
+  local ln = term.color(pad(" ", w), nil, term.colors.bg.white)
   for y=ty, ty+h, 1 do
     term.cursor(tx, y)
     io.write(ln)
@@ -20,7 +20,7 @@ local w, h = term.getSize()
 local function draw(items, title, hlt, sel)
   fill(2, 2, w - 4, h - 4)
   term.cursor(3, 3)
-  io.write(term.color(title, term.colors.fg.bright.black, term.colors.bg.bright.white))
+  io.write(term.color(title, term.colors.fg.black, term.colors.bg.white))
   for i=1, #items, 1 do
     local text = pad(items[i].text, w - 10)
     if items[i].selectable then
@@ -33,9 +33,9 @@ local function draw(items, title, hlt, sel)
       text = "--> " .. text
     end
     if hlt == i then
-      text = term.color(text, term.colors.fg.bright.white, term.colors.bg.bright.red)
+      text = term.color(text, term.colors.fg.bright.white, term.colors.bg.red)
     else
-      text = term.color(text, term.colors.fg.bright.black, term.colors.bg.bright.white)
+      text = term.color(text, term.colors.fg.black, term.colors.bg.white)
     end
     term.cursor(3, i + 4)
     io.write(text)
