@@ -17,7 +17,6 @@ local function select_mods()
       table.insert(CONFIG.modules.misc, v)
     else
       for kk, vv in pairs(CONFIG.modules.misc) do
-        print(v,vv)
         if v ~= vv then
           table.insert(CONFIG.modules.misc, v)
           goto cont

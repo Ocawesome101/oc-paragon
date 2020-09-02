@@ -1,9 +1,6 @@
 -- security :^) --
 
-do
-  security = {}
+local security = {}
+k.security = security
 
-  function security.getPermissions(file)
-    local info = vfs.stat(file)
-  end
-end
+--#include "ksrc/security/users.lua"

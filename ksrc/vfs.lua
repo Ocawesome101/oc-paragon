@@ -32,6 +32,8 @@ do
   end
 
   -- XXX: vfs.resolve does NOT check if a file exists.
+  -- vfs.resolve(path:string): table, string or nil, string
+  --   Tries to resolve a file path to a filesystem proxy.
   function vfs.resolve(path)
     checkArg(1, path, "string")
     kio.dmesg(kio.loglevels.DEBUG, "vfs: resolve "..path)
@@ -42,6 +44,7 @@ do
         return nil, "root filesystem not mounted"
       end
     end
+    if path:sub(1, 1) ~= "/" then path = "/" .. path end
     local segs = segments(path)
     for i=#segs, 1, -1 do
       local retpath = "/" .. table.concat(segs, "/", i, #segs)
@@ -57,6 +60,8 @@ do
     return kio.error("FILE_NOT_FOUND")
   end
 
+  -- vfs.mount(prx:table, path:string): boolean or nil, string
+  --   Tries to mount the provided proxy at the provided file path.
   function vfs.mount(prx, path)
     checkArg(1, prx, "table")
     checkArg(2, path, "string")
@@ -68,6 +73,8 @@ do
     return true
   end
   
+  -- vfs.mounts(): table
+  --   Return a table with keys addresses and values paths of all mounted filesystems.
   function vfs.mounts()
     local ret = {}
     for k, v in pairs(mnt) do
@@ -76,6 +83,8 @@ do
     return ret
   end
 
+  -- vfs.umount(path:string): boolean or nil, string
+  --   Tries to unmount the proxy at the provided path.
   function vfs.umount(path)
     checkArg(1, path, "string")
     path = "/" .. table.concat(segments(path), "/")
@@ -86,6 +95,8 @@ do
     return true
   end
 
+  -- vfs.stat(file:string): table or nil, string
+  --   Tries to get information about a file or directory.
   function vfs.stat(file)
     checkArg(1, file, "string")
     local node, path = vfs.resolve(file)

@@ -78,7 +78,8 @@ do
     table.insert(palette, pack(i,i,i))
   end
   local min, max = math.min, math.max
-  -- vt.emu takes a gpu and screen address and returns a (non-buffered!) stream
+  -- vt.new(gpu:string, screen:string): table
+  --   This function takes a gpu and screen address and returns a (non-buffered!) stream.
   function vt.new(gpu, screen)
     checkArg(1, gpu, "string")
     checkArg(2, screen, "string")
@@ -126,6 +127,8 @@ do
     local stream = {}
 
     local p = {}
+    -- stream:write(str:string): boolean or nil, string
+    --   Write a string to the stream. The string will be parsed for vt100 codes.
     function stream:write(str)
       checkArg(1, str, "string")
       if self.closed then
@@ -304,11 +307,12 @@ do
       end
     end
 
-    -- read() returns characters from the input buffer
+    -- stream:read([n:number]): string or nil, string
+    --   Returns characters from the keyboard input buffer.
     function stream:read(n)
       checkArg(1, n, "number", "nil")
       if self.closed then
-        return nil
+        return kio.error("IO_ERROR")
       end
       if n == math.huge then
         rb = ""
@@ -359,6 +363,8 @@ do
     local id = k.evt.register("key_down", listener)
     -- we should unregister the listener when the terminal stream is closed to
     -- help memory usage and responsiveness
+    -- stream:close(): boolean
+    --   Close the terminal stream. Unregisters the key listener.
     function stream:close()
       self.closed = true
       k.evt.unregister(id)

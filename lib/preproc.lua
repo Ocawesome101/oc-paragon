@@ -26,7 +26,7 @@ end
 function preproc.line(line) -- string -- -- Returns either a function - which can be called to get lines until it returns nil - or a string from processing *line* using preprocessor directives.
  if line:match("^%-%-#") then
   local directive, args = line:match("^%-%-#(%S+)%s(.+)")
-  log(directive,args)
+--  log(directive,args)
   local args = preproc.parsewords(args)
   if preproc.directives[directive] then
    return preproc.directives[directive](table.unpack(args))
@@ -35,7 +35,7 @@ function preproc.line(line) -- string -- -- Returns either a function - which ca
   end
  elseif line:match("@%[%{(.-)%}%]") then -- this directive was added by Ocawesome101
   for expr in line:gmatch("@%[%{(.-)%}%]") do
-   print(expr)
+--   print(expr)
    local ok, err = load("return " .. expr, "=@[{directive}]", "bt", _G)
    assert(ok, err or "expression " .. expr .. " returned nil!")
    line = line:gsub("@%[%{"..expr.."%}%]", tostring(ok()))
@@ -52,7 +52,7 @@ function preproc.preproc(...) -- string -- string -- Returns the output from pre
  for _,fname in ipairs(tA) do
   local f,e = io.open(fname)
   if not f then error("unable to open file "..fname..": "..e) end
-  log("process:", fname)
+--  log("process:", fname)
   for line in f:lines() do
    local r = preproc.line(line)
    if type(r) == "function" then

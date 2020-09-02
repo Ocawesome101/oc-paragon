@@ -2,7 +2,8 @@
 
 kio.dmesg(kio.loglevels.INFO, "ksrc/mods.lua")
 
--- basic loadfile implementation
+-- <basic> loadfile(file:string): function or nil, string
+--   Tries to load `file` from the filesystem.
 function loadfile(file)
   checkArg(1, file, "string")
   kio.dmesg(kio.loglevels.DEBUG, "loadfile: "..file)
@@ -13,7 +14,7 @@ function loadfile(file)
   end
   local handle, err = node:open(path, "r")
   if not handle then
-    kio.dmesg(kio.loglevels.DEBUG, "loadfile: "..err)
+    kio.dmesg(kio.loglevels.DEBUG, "loadfile: node: "..err)
     return nil, err
   end
   local data = ""
