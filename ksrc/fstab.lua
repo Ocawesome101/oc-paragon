@@ -42,7 +42,8 @@ do
   end
   local handle, err = ifs:open(p)
   if not handle then
-    kio.panic("error opening /etc/fstab: "..err)
+    kio.dmesg(kio.loglevels.WARNING, "error opening /etc/fstab: "..err)
+    goto eol
   end
   local data = ""
   repeat
@@ -57,5 +58,5 @@ do
     local pspec, fsspec, path, mode = line:match("(.-)%s+(.-)%s+(.-)%s+(.-)")
     local ptab, addr, a
   end
-  ::cont::
+  ::eol::
 end

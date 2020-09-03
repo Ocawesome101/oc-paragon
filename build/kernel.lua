@@ -166,6 +166,7 @@ end
 -- kio.dmesg(level:number, msg:string): boolean
 --   Log `msg` to the console with loglevel `level`.
 function kio.dmesg(level, msg)
+  level = level or kio.loglevels.INFO
   local mesg = string.format("[%5.05f] [%s] %s", computer.uptime(), kio.levels[level], msg)
   if level >= kargs.loglevel then
     kio.console(mesg)
@@ -574,6 +575,39 @@ do
   end
 end
 
+-- utils
+
+do
+  function table.copy(tbl)
+    local seen = {}
+    local function copy(t)
+      local ret = {}
+      for k, v in pairs(t) do
+        if type(v) == "table" then
+          if not seen[v] then
+            seen[v] = true
+            ret[k] = copy(v)
+          end
+        else
+          ret[k] = v
+        end
+      end
+      return ret
+    end
+    return copy(tbl)
+  end
+end
+
+-- kernel api
+
+kio.dmesg(kio.loglevels.INFO, "ksrc/kapi.lua")
+k = {}
+k.args    = kargs
+k.io      = kio
+k.info    = _KINFO
+k.process = sched
+k.drv     = kdrv
+
 -- scheduler part 1: process template
 
 kio.dmesg(kio.loglevels.INFO, "ksrc/process.lua")
@@ -750,15 +784,39 @@ do
   end
 end
 
--- kernel api
+-- a scheduler! --
 
-kio.dmesg(kio.loglevels.INFO, "ksrc/kapi.lua")
-k = {}
-k.args    = kargs
-k.io      = kio
-k.info    = _KINFO
-k.process = sched
-k.drv     = kdrv
+kio.dmesg(kio.loglevels.INFO, "ksrc/scheduler.lua")
+
+do
+  local procs = {}
+  local s = {}
+  local last, current = 0, 0
+
+  -- k.sched.spawn(func:function, name:string): table
+  --   Spawns a process, adding `func` to its threads.
+  function s.spawn(func, name)
+    last = last + 1
+    local p = procs[current]
+    local new = process.new {
+      pid = last,
+      parent = current,
+      env = p and table.copy(p.env) or {},
+      stdin = p and p.io.stdin or {},
+      stdout = p and p.io.stdout or {},
+      stderr = p and p.io.stderr or {}
+    }
+    procs[new.pid] = new
+    return new -- the userspace function will just return the PID
+  end
+
+  -- k.sched.getinfo(pid:number): table or nil, string
+  --   Returns information about a process.
+  function s.getinfo(pid)
+  end
+
+  k.sched = s
+end
 
 -- Paragon eXecutable parsing?
 
@@ -1878,7 +1936,8 @@ do
   end
   local handle, err = ifs:open(p)
   if not handle then
-    kio.panic("error opening /etc/fstab: "..err)
+    kio.dmesg(kio.loglevels.WARNING, "error opening /etc/fstab: "..err)
+    goto eol
   end
   local data = ""
   repeat
@@ -1893,7 +1952,7 @@ do
     local pspec, fsspec, path, mode = line:match("(.-)%s+(.-)%s+(.-)%s+(.-)")
     local ptab, addr, a
   end
-  ::cont::
+  ::eol::
 end
 
 -- TTY driver --
