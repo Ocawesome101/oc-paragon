@@ -88,10 +88,10 @@ do
   function vfs.umount(path)
     checkArg(1, path, "string")
     path = "/" .. table.concat(segments(path), "/")
-    if not mns[path] then
+    if not mnt[path] then
       return nil, "no such device"
     end
-    mns[path] = nil
+    mnt[path] = nil
     return true
   end
 

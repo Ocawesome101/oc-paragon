@@ -7,8 +7,8 @@ do
 
   local pspec, addr, pn = fs:match("(.+)%((.+),(%d+)%)")
   addr = addr or fs:gsub("[^%w%-]+", "")
-  if not component.type(fs) then
-    kio.panic("invalid bootfs specification " .. fs .. " (got " .. addr .. ")")
+  if not component.type(addr) then
+    kio.panic("invalid bootfs specification (got " .. addr .. ")")
   end
   if component.type(addr) == "drive" then -- unmanaged, read partition table as specified
     if not pspec then

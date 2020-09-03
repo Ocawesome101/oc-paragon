@@ -27,7 +27,7 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.0.1",
-  built   = "2020/09/02",
+  built   = "2020/09/03",
   builder = "ocawesome101@manjaro-pbp"
 }
 
@@ -450,6 +450,8 @@ do
   end
   
   function drv.create(prx)
+    checkArg(1, prx, "table", "string")
+    if type(prx) == "string" then prx = component.proxy(prx) end
     return setmetatable({dev = prx}, {__index = default})
   end
 
@@ -553,10 +555,10 @@ do
   function vfs.umount(path)
     checkArg(1, path, "string")
     path = "/" .. table.concat(segments(path), "/")
-    if not mns[path] then
+    if not mnt[path] then
       return nil, "no such device"
     end
-    mns[path] = nil
+    mnt[path] = nil
     return true
   end
 
@@ -1724,8 +1726,8 @@ do
 
   local pspec, addr, pn = fs:match("(.+)%((.+),(%d+)%)")
   addr = addr or fs:gsub("[^%w%-]+", "")
-  if not component.type(fs) then
-    kio.panic("invalid bootfs specification " .. fs .. " (got " .. addr .. ")")
+  if not component.type(addr) then
+    kio.panic("invalid bootfs specification (got " .. addr .. ")")
   end
   if component.type(addr) == "drive" then -- unmanaged, read partition table as specified
     if not pspec then
@@ -1844,6 +1846,28 @@ do
   if not kargs.root and not computer.getBootAddress then
     kio.panic("rootfs not specified and no way to find it!")
   end
+
+  local pspec, addr, n = kargs.root:match("(%w+)%(([%w%-]+),(%d+)%)")
+  kio.dmesg(kio.loglevels.DEBUG, pspec.."("..addr..","..n..")")
+  addr = addr or kargs.root
+  if component.type(addr) == "filesystem" then
+    pspec = "managed"
+    if not k.drv.fs.managed then
+      kio.panic("managed fs driver required but not present")
+    end
+    local prx, err = component.proxy(addr)
+    local rfs = kdrv.fs.managed.create(prx)
+    vfs.umount("/")
+    vfs.mount(rfs, "/")
+  elseif component.type(addr) == "drive" then
+    --[[ TODO TODO TODO TODO TODO
+         SUPPORT UNMANAGED DRIVES!
+         TODO TODO TODO TODO TODO ]]
+    kio.panic("TODO - unmanaged drive support!")
+    pspec = pspec or "unmanaged" -- defaults to full drive as filesystem
+  else
+    kio.panic("invalid rootfs partspec: "..kargs.root)
+  end
 end
 
 -- load and parse the fstab
@@ -1854,7 +1878,7 @@ do
   end
   local handle, err = ifs:open(p)
   if not handle then
-    kio.panic(err)
+    kio.panic("error opening /etc/fstab: "..err)
   end
   local data = ""
   repeat

@@ -11,15 +11,18 @@ do
     kio.panic("rootfs not specified and no way to find it!")
   end
 
-  local pspec, addr, n = kargs.root:match("(%w)%(([%w%-]+,(%d+))%)")
+  local pspec, addr, n = kargs.root:match("(%w+)%(([%w%-]+),(%d+)%)")
+  kio.dmesg(kio.loglevels.DEBUG, pspec.."("..addr..","..n..")")
   addr = addr or kargs.root
   if component.type(addr) == "filesystem" then
     pspec = "managed"
     if not k.drv.fs.managed then
       kio.panic("managed fs driver required but not present")
     end
-    local prx = component.proxy(addr)
-    local rfs = kdrv.fs.managed.create(pspec)
+    local prx, err = component.proxy(addr)
+    local rfs = kdrv.fs.managed.create(prx)
+    vfs.umount("/")
+    vfs.mount(rfs, "/")
   elseif component.type(addr) == "drive" then
     --[[ TODO TODO TODO TODO TODO
          SUPPORT UNMANAGED DRIVES!
@@ -27,7 +30,7 @@ do
     kio.panic("TODO - unmanaged drive support!")
     pspec = pspec or "unmanaged" -- defaults to full drive as filesystem
   else
-    kio.panic("invalid rootfs partspec!")
+    kio.panic("invalid rootfs partspec: "..kargs.root)
   end
 end
 
@@ -39,7 +42,7 @@ do
   end
   local handle, err = ifs:open(p)
   if not handle then
-    kio.panic(err)
+    kio.panic("error opening /etc/fstab: "..err)
   end
   local data = ""
   repeat

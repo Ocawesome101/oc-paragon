@@ -27,6 +27,8 @@ do
   end
   
   function drv.create(prx)
+    checkArg(1, prx, "table", "string")
+    if type(prx) == "string" then prx = component.proxy(prx) end
     return setmetatable({dev = prx}, {__index = default})
   end
 
