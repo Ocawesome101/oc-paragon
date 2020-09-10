@@ -146,7 +146,7 @@ do
           elseif c == "\t" then
             wb = wb .. (" "):rep(max(1, (cx + 4) % 8))
           elseif c == "\27" then
-            flush()
+            flushwb()
             mode = 1
           elseif c == "\7" then -- ascii BEL
             computer.beep(".")
