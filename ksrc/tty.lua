@@ -296,6 +296,7 @@ do
               end
             end
           end
+          p = {}
         end
         flushwb()
         checkCursor()
