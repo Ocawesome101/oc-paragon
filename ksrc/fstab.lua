@@ -4,7 +4,7 @@
 kio.dmesg(kio.loglevels.INFO, "ksrc/fstab.lua")
 
 -- mount the rootfs
-do
+if not kargs.keep_initfs then
   kargs.root = kargs.root or computer.getBootAddress and
                        string.format("managed(%s,1)", computer.getBootAddress())
   if not kargs.root and not computer.getBootAddress then

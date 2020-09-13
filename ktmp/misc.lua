@@ -1,4 +1,7 @@
 --#include "ksrc/misc/event.lua"
 --#include "ksrc/misc/bit32_lua53.lua"
---#include "ksrc/misc/uuid.lua"
+--#include "ksrc/misc/ec25519.lua"
 --#include "ksrc/misc/event.lua"
+--#include "ksrc/misc/sha2.lua"
+--#include "ksrc/misc/sha3.lua"
+--#include "ksrc/misc/uuid.lua"
