@@ -22,6 +22,7 @@
 --#include "ksrc/kapi.lua"
 --#include "ksrc/process.lua"
 --#include "ksrc/scheduler.lua"
+--#include "ksrc/io.lua"
 --#include "ktmp/exec.lua"
 --#include "ktmp/misc.lua"
 --#include "ksrc/iramfs.lua"

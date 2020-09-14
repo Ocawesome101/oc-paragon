@@ -2,7 +2,14 @@
 
 do
   local buf = {}
+  local mt = {
+    __index = buf,
+    __metatable = "file"
+  }
+
   function buf.new(stream, mode)
+    checkArg(1, stream, "table")
+    checkArg(2, mode, "string")
     local new = {
       stream = stream,
       mode = {},
@@ -12,7 +19,10 @@ do
       closed = false,
       bufsize = 512
     }
-    return setmetatable(new, {__index = buf})
+    for c in mode:gmatch(".") do
+      new.mode[c] = true
+    end
+    return setmetatable(new, mt)
   end
 
   function buf:read(fmt)
@@ -44,9 +54,17 @@ do
     end
   end
 
-  function buf:write(dat)
-    checkArg(1, dat, "string")
-    if #self.wbuf + dat > self.bufsize then
+  function buf:write(...)
+    local args = table.pack(...)
+    for i=1, args.n, 1 do
+      checkArg(i, dat, "string", "number")
+    end
+    local dat = table.concat(args)
+    self.wbuf = self.wbuf .. dat
+    if #self.wbuf > self.bufsize then
+      local wrt = self.wbuf
+      self.wbuf = ""
+      self.stream:write(wrt)
     end
   end
 

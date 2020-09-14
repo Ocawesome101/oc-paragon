@@ -166,4 +166,6 @@ do
   end
 end
 
+--#include "ksrc/buffer.lua"
+
 kio.dmesg(kio.loglevels.INFO, string.format("Starting %s version %s - built %s by %s", _KINFO.name, _KINFO.version, _KINFO.built, _KINFO.builder))
