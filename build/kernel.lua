@@ -27,7 +27,7 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.0.1",
-  built   = "2020/09/11",
+  built   = "2020/09/12",
   builder = "ocawesome101@manjaro-pbp"
 }
 
@@ -695,6 +695,9 @@ do
         self.deadline = nd
       end
     end
+    if #self.threads == 0 then
+      self.dead = true
+    end
     return true
   end
 
@@ -723,7 +726,10 @@ do
       deadline = self.deadline,
       io = self.io,
       sighandlers = self.sighandlers,
-      threads = self.threads
+      threads = self.threads,
+      stdin = process.stdin, -- convenience
+      stdout = process.stdout,
+      stderr = process.stderr
     }
   end
 
@@ -795,16 +801,18 @@ do
   -- TODO: proper process timeouts
   local timeout = tonumber(kargs["scheduler.timeout"]) or 0.5
 
-  -- k.sched.spawn(func:function, name:string): table
+  -- k.sched.spawn(func:function, name:string[, priority:number]): table
   --   Spawns a process, adding `func` to its threads.
-  function s.spawn(func, name)
+  function s.spawn(func, name, priority)
     checkArg(1, func, "function")
     checkArg(2, name, "string")
+    checkArg(3, priority, "number", "nil")
     last = last + 1
     local p = procs[current]
     local new = process.new {
       pid = last,
       parent = current,
+      priority = priority or math.huge,
       env = p and table.copy(p.env) or {},
       stdin = p and p.io.stdin or {},
       stdout = p and p.io.stdout or {},
@@ -817,7 +825,7 @@ do
 
   -- k.sched.getinfo(pid:number): table or nil, string
   --   Returns information about a process.
-  -- XXX: This function is dangerous and should not sneak into userspace under
+  -- XXX: This function is dangerous and should not appear in userspace under
   -- XXX: any circumstances!
   function s.getinfo(pid)
     checkArg(1, pid, "number", "nil")
@@ -844,12 +852,41 @@ do
     end
   end
 
+  function s.newthread(func, name)
+    checkArg(1, func, "function")
+    checkArg(2, name, "string", "nil")
+    local proc = procs[current]
+    if not proc then
+      return nil, "error adding thread"
+    end
+    return proc:addThread(func, name)
+  end
+
+  s.kill = s.signal
+
   function s.loop()
     s.loop = nil
     local sig
     while #procs > 0 do
       sig = table.pack(computer.pullSignal(timeout))
-      
+      local run
+      for pid, proc in pairs(procs) do
+        if not proc.stopped then
+          run[#run + 1] = proc
+        end
+      end
+      table.sort(run, function(a, b)
+        return a.priority < b.priority
+      end)
+      for i=1, #run, 1 do
+        local proc = run[i]
+        current = proc.pid
+        proc:resume(table.unpack(sig))
+        if proc.dead then
+          computer.pushSignal("process_died", proc.pid, proc.name)
+          procs[proc.pid] = nil
+        end
+      end
     end
     kio.panic("All processes died!")
   end

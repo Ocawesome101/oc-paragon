@@ -33,7 +33,7 @@ do
 
   -- k.sched.getinfo(pid:number): table or nil, string
   --   Returns information about a process.
-  -- XXX: This function is dangerous and should not sneak into userspace under
+  -- XXX: This function is dangerous and should not appear in userspace under
   -- XXX: any circumstances!
   function s.getinfo(pid)
     checkArg(1, pid, "number", "nil")
@@ -60,6 +60,18 @@ do
     end
   end
 
+  function s.newthread(func, name)
+    checkArg(1, func, "function")
+    checkArg(2, name, "string", "nil")
+    local proc = procs[current]
+    if not proc then
+      return nil, "error adding thread"
+    end
+    return proc:addThread(func, name)
+  end
+
+  s.kill = s.signal
+
   function s.loop()
     s.loop = nil
     local sig
@@ -74,6 +86,15 @@ do
       table.sort(run, function(a, b)
         return a.priority < b.priority
       end)
+      for i=1, #run, 1 do
+        local proc = run[i]
+        current = proc.pid
+        proc:resume(table.unpack(sig))
+        if proc.dead then
+          computer.pushSignal("process_died", proc.pid, proc.name)
+          procs[proc.pid] = nil
+        end
+      end
     end
     kio.panic("All processes died!")
   end

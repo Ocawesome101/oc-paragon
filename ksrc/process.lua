@@ -85,6 +85,9 @@ do
         self.deadline = nd
       end
     end
+    if #self.threads == 0 then
+      self.dead = true
+    end
     return true
   end
 
@@ -113,7 +116,10 @@ do
       deadline = self.deadline,
       io = self.io,
       sighandlers = self.sighandlers,
-      threads = self.threads
+      threads = self.threads,
+      stdin = process.stdin, -- convenience
+      stdout = process.stdout,
+      stderr = process.stderr
     }
   end
 
