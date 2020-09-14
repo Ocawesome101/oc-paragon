@@ -1,5 +1,7 @@
 -- utils
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/util.lua")
+
 do
   function table.copy(tbl)
     local seen = {}

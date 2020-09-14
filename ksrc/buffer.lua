@@ -1,5 +1,7 @@
 -- simple buffer implementation --
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/buffer.lua")
+
 do
   local buf = {}
   local mt = {

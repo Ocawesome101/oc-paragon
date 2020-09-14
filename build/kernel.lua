@@ -27,7 +27,7 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.0.1",
-  built   = "2020/09/12",
+  built   = "2020/09/13",
   builder = "ocawesome101@manjaro-pbp"
 }
 
@@ -198,6 +198,110 @@ do
     end
   end
 end
+
+-- simple buffer implementation --
+
+kio.dmesg(kio.loglevels.INFO, "ksrc/buffer.lua")
+
+do
+  local buf = {}
+  local mt = {
+    __index = buf,
+    __metatable = "file"
+  }
+
+  function buf.new(stream, mode)
+    checkArg(1, stream, "table")
+    checkArg(2, mode, "string")
+    local new = {
+      stream = stream,
+      mode = {},
+      tty = false, -- if true, then returned stream is not buffered
+      rbuf = "",
+      wbuf = "",
+      closed = false,
+      bufsize = 512
+    }
+    for c in mode:gmatch(".") do
+      new.mode[c] = true
+    end
+    return setmetatable(new, mt)
+  end
+
+  function buf:read(fmt)
+    checkArg(1, fmt, "number", "string", "nil")
+    fmt = fmt or "l"
+    if type(fmt) == "string" then
+      fmt = fmt:gsub("%*", "")
+    end
+    if fmt == "a" then
+      return self:readNum(math.huge)
+    elseif fmt == "l" then
+      local ln = ""
+      repeat
+        local c = self:readNum(1)
+        if c and c ~= "\n" then ln = ln .. c end
+      until c == "\n" or not c
+      return ln
+    elseif fmt == "L" then
+      local ln = ""
+      repeat
+        local c = self:readNum(1)
+        if c then ln = ln .. c end
+      until c == "\n" or not c
+      return ln
+    elseif type(fmt) == "number" then
+      return self:readNum(fmt)
+    else
+      error("bad argument #1: invalid format")
+    end
+  end
+
+  function buf:write(...)
+    local args = table.pack(...)
+    for i=1, args.n, 1 do
+      checkArg(i, dat, "string", "number")
+    end
+    local dat = table.concat(args)
+    self.wbuf = self.wbuf .. dat
+    if #self.wbuf > self.bufsize then
+      local wrt = self.wbuf
+      self.wbuf = ""
+      self.stream:write(wrt)
+    end
+  end
+
+  function buf:flush()
+    self.stream:write(self.wbuf)
+    self.wbuf = ""
+    return true
+  end
+
+  function buf:close()
+    self:flush()
+    self.closed = true
+  end
+
+  function buf:readNum(n)
+    checkArg(1, n, "number")
+    if #self.rbuf < n then
+      local reqN = n + math.min(0, self.bufsize - n)
+      repeat
+        local dat = self.stream:read(reqN)
+        if not dat then reqN = 0
+         else reqN = reqN - #dat
+              self.rbuf = self.rbuf .. dat
+        end
+      until reqN <= 0
+    end
+    local ret = self.rbuf:sub(1, n)
+    self.rbuf = self.rbuf:sub(n + 1)
+    return ret
+  end
+
+  kio.buffer = buf
+end
+
 
 kio.dmesg(kio.loglevels.INFO, string.format("Starting %s version %s - built %s by %s", _KINFO.name, _KINFO.version, _KINFO.built, _KINFO.builder))
 
@@ -577,6 +681,8 @@ end
 
 -- utils
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/util.lua")
+
 do
   function table.copy(tbl)
     local seen = {}
@@ -891,6 +997,88 @@ do
     kio.panic("All processes died!")
   end
   k.sched = s
+end
+
+-- buffered file I/O and misc other --
+
+kio.dmesg(kio.loglevels.INFO, "ksrc/io.lua")
+
+do
+  local io = {}
+  _G.io = io
+
+  local vfs = vfs
+
+  local iomt = {
+    __index = function(self, k)
+      local info = k.sched.getinfo()
+      if k == "stdin" then
+        return info:stdin()
+      elseif k == "stdout" then
+        return info:stdout()
+      elseif k == "stderr" then
+        return info:stderr()
+      end
+    end,
+    __metatable = {}
+  }
+  setmetatable(io, iomt)
+
+  local st = {}
+  function st:read(n)
+    return self.node:read(self.fd, n)
+  end
+
+  function st:write(d)
+    return self.node:write(self.fd, d)
+  end
+
+  function st:close()
+    return self.node:close(self.fd)
+  end
+
+  local function streamify(node, fd)
+    local new = {
+      node = node,
+      fd = fd
+    }
+    return setmetatable(new, {__index = st})
+  end
+  
+  -- io.open(file:string[, mode:string]): table or nil, string
+  --   Returns a buffered file handle to 
+  function io.open(file, mode)
+    checkArg(1, file, "string")
+    checkArg(2, mode, "string", "nil")
+    local node, path = vfs.resolve(file)
+    if not node then
+      return nil, path
+    end
+    local handle, err = node:open(path, mode)
+    if not handle then
+      return nil, err
+    end
+    local stream = streamify(node, handle)
+    return kio.buffer.new(stream, mode)
+  end
+
+  function io.input(file)
+    local info = k.sched.getinfo()
+    return info:stdin(file)
+  end
+
+  function io.output(file)
+    local info = k.sched.getinfo()
+    return info:stdout(file)
+  end
+
+  function io.read(...)
+    return io.stdin:read(...)
+  end
+
+  function io.write(...)
+    return io.stdout:write(...)
+  end
 end
 
 -- Paragon eXecutable parsing?

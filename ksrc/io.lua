@@ -1,5 +1,7 @@
 -- buffered file I/O and misc other --
 
+kio.dmesg(kio.loglevels.INFO, "ksrc/io.lua")
+
 do
   local io = {}
   _G.io = io
