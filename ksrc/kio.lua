@@ -133,6 +133,7 @@ end
 -- kio.dmesg(level:number, msg:string): boolean
 --   Log `msg` to the console with loglevel `level`.
 function kio.dmesg(level, msg)
+  if not msg then msg = level level = nil end
   level = level or kio.loglevels.INFO
   local mesg = string.format("[%5.05f] [%s] %s", computer.uptime(), kio.levels[level], msg)
   if level >= kargs.loglevel then

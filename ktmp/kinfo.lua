@@ -1,6 +1,6 @@
 _G._KINFO = {
   name    = "Paragon",
   version = "0.0.1",
-  built   = "2020/09/13",
-  builder = "ocawesome101@manjaro-pbp"
+  built   = "2020/09/14",
+  builder = "ocawesome101@archlinux"
 }

@@ -21,6 +21,7 @@ do
     end,
     __metatable = {}
   }
+  k.iomt = iomt
   setmetatable(io, iomt)
 
   local st = {}
@@ -78,4 +79,6 @@ do
   function io.write(...)
     return io.stdout:write(...)
   end
+
+  --TODO: flesh out io, maybe in userspace?
 end

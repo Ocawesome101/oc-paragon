@@ -27,8 +27,8 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.0.1",
-  built   = "2020/09/13",
-  builder = "ocawesome101@manjaro-pbp"
+  built   = "2020/09/14",
+  builder = "ocawesome101@archlinux"
 }
 
 -- kernel i/o
@@ -166,6 +166,7 @@ end
 -- kio.dmesg(level:number, msg:string): boolean
 --   Log `msg` to the console with loglevel `level`.
 function kio.dmesg(level, msg)
+  if not msg then msg = level level = nil end
   level = level or kio.loglevels.INFO
   local mesg = string.format("[%5.05f] [%s] %s", computer.uptime(), kio.levels[level], msg)
   if level >= kargs.loglevel then
@@ -1022,6 +1023,7 @@ do
     end,
     __metatable = {}
   }
+  k.iomt = iomt
   setmetatable(io, iomt)
 
   local st = {}
@@ -1079,6 +1081,8 @@ do
   function io.write(...)
     return io.stdout:write(...)
   end
+
+  --TODO: flesh out io, maybe in userspace?
 end
 
 -- Paragon eXecutable parsing?
@@ -2597,6 +2601,35 @@ do
     return stream
   end
   k.vt = vt
+end
+
+-- sandbox --
+
+kio.dmesg("ksrc/sandbox.lua")
+
+-- loadfile --
+
+function _G.loadfile(file, mode, env)
+  checkArg(1, file, "string")
+  checkArg(2, mode, "string", "nil")
+  checkArg(3, env, "table", "nil")
+  local handle, err = io.open(file, "r")
+  if not handle then
+    return nil, err
+  end
+  local data = handle:read("a")
+  handle:close()
+  return load(data, "="..file, mode or "bt", env or k.sb or _G)
+end
+
+
+do
+  local sb = {}
+  sb = table.copy(_G)
+  sb._G = sb
+  function sb.load(x,n,m,e)return load(x,n,m,e or sb)end
+  setmetatable(sb.io, k.iomt)
+  k.iomt = nil
 end
 
 kio.panic("premature exit!")
