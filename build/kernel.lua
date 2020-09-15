@@ -27,7 +27,7 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.0.1",
-  built   = "2020/09/14",
+  built   = "2020/09/15",
   builder = "ocawesome101@archlinux"
 }
 
@@ -714,6 +714,13 @@ k.io      = kio
 k.info    = _KINFO
 k.process = sched
 k.drv     = kdrv
+
+-- security :^) --
+
+local security = {}
+k.security = security
+
+
 
 -- scheduler part 1: process template
 

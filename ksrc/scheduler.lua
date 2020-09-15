@@ -11,7 +11,7 @@ do
 
   -- k.sched.spawn(func:function, name:string[, priority:number]): table
   --   Spawns a process, adding `func` to its threads.
-  function s.spawn(func, name, priority)
+  function s.spawn(func, name, priority, INTERNAL_UNDOCUMENTED_ARGUMENT)
     checkArg(1, func, "function")
     checkArg(2, name, "string")
     checkArg(3, priority, "number", "nil")
@@ -24,7 +24,8 @@ do
       env = p and table.copy(p.env) or {},
       stdin = p and p.io.stdin or {},
       stdout = p and p.io.stdout or {},
-      stderr = p and p.io.stderr or {}
+      stderr = p and p.io.stderr or {},
+      owner = INTERNAL_UNDOCUMENTED_ARGUMENT
     }
     new:addThread(func)
     procs[new.pid] = new

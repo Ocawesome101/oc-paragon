@@ -20,6 +20,8 @@
 --#include "ksrc/vfs.lua"
 --#include "ksrc/util.lua"
 --#include "ksrc/kapi.lua"
+--#include "ksrc/hooks.lua"
+--#include "ksrc/security.lua"
 --#include "ksrc/process.lua"
 --#include "ksrc/scheduler.lua"
 --#include "ksrc/io.lua"

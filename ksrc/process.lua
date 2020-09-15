@@ -70,6 +70,7 @@ do
   -- process:resume(...): boolean
   --   Resume all threads in the process.
   function process:resume(...)
+    local resumed = computer.uptime()
     for i=1, #self.threads, 1 do
       kio.dmesg(kio.loglevels.DEBUG, "process " .. self.pid .. ": resuming thread " .. i)
       local thd = self.threads[i]
@@ -88,6 +89,7 @@ do
     if #self.threads == 0 then
       self.dead = true
     end
+    self.runtime = self.runtime + (computer.uptime() - resumed)
     return true
   end
 
@@ -110,13 +112,14 @@ do
   --   See `k.sched.getinfo`.
   function process:info()
     return {
+      io = self.io,
       env = self.env,
+      owner = self.owner
       started = self.started,
       runtime = self.runtime,
-      deadline = self.deadline,
-      io = self.io,
-      sighandlers = self.sighandlers,
       threads = self.threads,
+      deadline = self.deadline,
+      sighandlers = self.sighandlers,
       stdin = process.stdin, -- convenience
       stdout = process.stdout,
       stderr = process.stderr
