@@ -114,7 +114,7 @@ do
     return {
       io = self.io,
       env = self.env,
-      owner = self.owner
+      owner = self.owner,
       started = self.started,
       runtime = self.runtime,
       threads = self.threads,

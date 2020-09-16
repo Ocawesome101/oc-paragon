@@ -24,7 +24,7 @@ do
 
   local msgs = {
     "no such user",
-    "invalid credentials"
+    "invalid credentials",
     "permission denied"
   }
 
@@ -34,10 +34,10 @@ do
     if not upasswd[uid] then
       return nil, _ and 1 or msgs[1]
     end
-    if string.hex(passwd) == upasswd[uid].hash then
+    if string.hex(k.sha3.sha512(passwd)) == upasswd[uid].hash then
       return true
     else
-      return _ and 2 or msgs[2]
+      return nil, _ and 2 or msgs[2]
     end
   end
 
@@ -50,7 +50,11 @@ do
     if not ok then
       return nil, msgs[code <= 1 and code or 3]
     end
-    local pid = k.sched.spawn(func, name, uid)
+    local pid = k.sched.spawn(func, name, nil, uid)
+    repeat
+      coroutine.yield()
+    until not k.sched.getinfo(pid)
+    return true
   end
 
   function users.user()
@@ -58,4 +62,13 @@ do
   end
 
   k.security.users = users
+end
+
+-- add sandbox hook to prevent userspace from easily spoofing user IDs
+do
+  k.hooks.add("sandbox", function()
+    function k.sb.sched.spawn(a,b,c)
+      return k.sched.spawn(a,b,c)
+    end
+  end)
 end

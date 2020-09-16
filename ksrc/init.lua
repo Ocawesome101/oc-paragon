@@ -32,4 +32,5 @@
 --#include "ksrc/fstab.lua"
 --#include "ksrc/tty.lua"
 --#include "ksrc/sandbox.lua"
+--#include "ksrc/loadinit.lua"
 kio.panic("premature exit!")
