@@ -75,10 +75,9 @@ do
 
   function s.loop()
     s.loop = nil
-    local sig
     kio.dmesg(kio.loglevels.DEBUG, "starting scheduler loop")
     while #procs > 0 do
-      sig = table.pack(computer.pullSignal(timeout))
+      local sig = table.pack(computer.pullSignal(timeout))
       local run = {}
       for pid, proc in pairs(procs) do
         if not proc.stopped then
@@ -97,6 +96,10 @@ do
           computer.pushSignal("process_died", proc.pid, proc.name)
           procs[proc.pid] = nil
         end
+      end
+      if computer.freeMemory() < 1024 then
+        kio.dmesg(kio.loglevels.INFO, "low memory - collecting garbage")
+        collectgarbage()
       end
     end
     kio.panic("All processes died!")

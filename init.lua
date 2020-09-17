@@ -26,5 +26,13 @@ end
 
 local ok, err = xpcall(ok, debug.traceback, flags)
 if not ok and err then
-  (kio and kio.panic or error)(err)
+  local h=invoke(addr,"open","/crash.txt","w")
+  if h then
+    invoke(addr,"write",h,err)
+  end
+  invoke(addr,"close",h)
+  if k and k.io then
+    k.io.panic(err)
+  end
+  error(err)
 end

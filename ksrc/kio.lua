@@ -95,7 +95,7 @@ function kio.pipe()
 end
 
 -- temporary log buffer until we get a root filesystem
-local dmesg = {}
+--local dmesg = {}
 
 local console
 do
@@ -141,7 +141,7 @@ function kio.dmesg(level, msg)
     if level >= kargs.loglevel then
       kio.console(mesg)
     end
-    table.insert(dmesg, mesg)
+--    table.insert(dmesg, mesg)
   end
   return true
 end

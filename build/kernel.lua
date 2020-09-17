@@ -28,7 +28,7 @@ _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
   built   = "2020/09/17",
-  builder = "ocawesome101@manjaro-pbp"
+  builder = "ocawesome101@archlinux"
 }
 
 -- kernel i/o
@@ -128,7 +128,7 @@ function kio.pipe()
 end
 
 -- temporary log buffer until we get a root filesystem
-local dmesg = {}
+--local dmesg = {}
 
 local console
 do
@@ -174,7 +174,7 @@ function kio.dmesg(level, msg)
     if level >= kargs.loglevel then
       kio.console(mesg)
     end
-    table.insert(dmesg, mesg)
+--    table.insert(dmesg, mesg)
   end
   return true
 end
@@ -714,6 +714,20 @@ do
     checkArg(1, t, "table")
     return deepcopy(t)
   end
+
+  local pullSignal = computer.pullSignal
+  function collectgarbage()
+    local miss = {}
+    for i=1, 10, 1 do
+      local sig = table.pack(pullSignal(0))
+      if sig.n > 0 then
+        table.insert(miss, sig)
+      end
+    end
+    for i=1, #miss, 1 do
+      computer.pushSignal(table.unpack(miss[i]))
+    end
+  end
 end
 
 -- kernel api
@@ -1114,10 +1128,9 @@ do
 
   function s.loop()
     s.loop = nil
-    local sig
     kio.dmesg(kio.loglevels.DEBUG, "starting scheduler loop")
     while #procs > 0 do
-      sig = table.pack(computer.pullSignal(timeout))
+      local sig = table.pack(computer.pullSignal(timeout))
       local run = {}
       for pid, proc in pairs(procs) do
         if not proc.stopped then
@@ -1136,6 +1149,10 @@ do
           computer.pushSignal("process_died", proc.pid, proc.name)
           procs[proc.pid] = nil
         end
+      end
+      if computer.freeMemory() < 1024 then
+        kio.dmesg(kio.loglevels.INFO, "low memory - collecting garbage")
+        collectgarbage()
       end
     end
     kio.panic("All processes died!")

@@ -27,4 +27,18 @@ do
     checkArg(1, t, "table")
     return deepcopy(t)
   end
+
+  local pullSignal = computer.pullSignal
+  function collectgarbage()
+    local miss = {}
+    for i=1, 10, 1 do
+      local sig = table.pack(pullSignal(0))
+      if sig.n > 0 then
+        table.insert(miss, sig)
+      end
+    end
+    for i=1, #miss, 1 do
+      computer.pushSignal(table.unpack(miss[i]))
+    end
+  end
 end
