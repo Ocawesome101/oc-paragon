@@ -317,19 +317,19 @@ do
                 rb = rb .. string.format("\27[%s;%sR", cy, cx)
               end
             end
-            p = {}
           end
+          p = {}
         end
-        flushwb()
-        checkCursor()
-        local _c, f, b = gpu.get(cx, cy)
-        gpu.setForeground(b)
-        gpu.setBackground(f)
-        gpu.set(cx, cy, _c)
-        gpu.setForeground(fg)
-        gpu.setBackground(bg)
-        return true
       end
+      flushwb()
+      checkCursor()
+      local _c, f, b = gpu.get(cx, cy)
+      gpu.setForeground(b)
+      gpu.setBackground(f)
+      gpu.set(cx, cy, _c)
+      gpu.setForeground(fg)
+      gpu.setBackground(bg)
+      return true
     end
 
     -- stream:read([n:number]): string or nil, string
