@@ -317,8 +317,8 @@ do
                 rb = rb .. string.format("\27[%s;%sR", cy, cx)
               end
             end
+            p = {}
           end
-          p = {}
         end
         flushwb()
         checkCursor()
