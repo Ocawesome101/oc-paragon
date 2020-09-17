@@ -30,8 +30,8 @@ do
     setmetatable(k.sb.io, iomt)
     k.sb.k.vfs = table.copy(vfs)
     k.sb.k.iomt = nil
-    k.sb.k.sched.loop = nil
-    k.sb.k.io.gpu = kio.gpu -- otherwise metatable weirdness
+    k.sb.k.io.gpu = kio.gpu -- otherwise metatable weirdness happens
+    k.sb.k.sb = nil -- just in case
   end
   k.hooks.add("sandbox", sbld)
 end

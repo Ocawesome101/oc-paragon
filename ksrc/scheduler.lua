@@ -105,4 +105,18 @@ do
     kio.panic("All processes died!")
   end
   k.sched = s
+
+  k.hooks.add("sandbox", function()
+    -- userspace process api
+    k.sb.process = {}
+    function k.sb.process.spawn(a,b,c)
+      return k.sched.spawn(a,b,c)
+    end
+
+    -- we can safely return only a very limited subset of process info
+    function k.sb.process.getinfo(pid)
+      checkArg(1, pid, "number", "nil")
+      local rawinfo = k.sched.getinfo(pid)
+    end
+  end)
 end

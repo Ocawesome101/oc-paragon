@@ -64,11 +64,15 @@ do
   k.security.users = users
 end
 
--- add sandbox hook to prevent userspace from easily spoofing user IDs
+-- add sandbox hooks
 do
   k.hooks.add("sandbox", function()
-    function k.sb.sched.spawn(a,b,c)
-      return k.sched.spawn(a,b,c)
-    end
+    -- raw component restrictions
+    sb.component = setmetatable({}, {__index = function(_,m)
+      if k.security.users.user() ~= 0 then
+        error(select(2, kio.error("PERMISSION_DENIED")))
+      end
+      return component[m]
+    end, __metatable = {}})
   end)
 end
