@@ -2926,6 +2926,8 @@ do
                   elseif n == 128 then -- enable line mode
                     lm = true
                   end
+                  gpu.setForeground(fg)
+                  gpu.setBackground(bg)
                 end
               end
             elseif c == "n" then
