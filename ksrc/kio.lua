@@ -1,6 +1,6 @@
 -- kernel i/o
 
-kio = {}
+local kio = {}
 
 kargs.loglevel = tonumber(kargs.loglevel) or 0
 
@@ -136,11 +136,13 @@ end
 function kio.dmesg(level, msg)
   if not msg then msg = level level = nil end
   level = level or kio.loglevels.INFO
-  local mesg = string.format("[%5.05f] [%s] %s", computer.uptime(), kio.levels[level], msg)
-  if level >= kargs.loglevel then
-    kio.console(mesg)
+  for line in msg:gmatch("[^\n]+") do
+    local mesg = string.format("[%5.05f] [%s] %s", computer.uptime(), kio.levels[level], line)
+    if level >= kargs.loglevel then
+      kio.console(mesg)
+    end
+    table.insert(dmesg, mesg)
   end
-  table.insert(dmesg, mesg)
   return true
 end
 

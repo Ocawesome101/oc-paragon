@@ -2,7 +2,7 @@
 
 kio.dmesg(kio.loglevels.INFO, "ksrc/kdrv.lua")
 
-kdrv = {}
+local kdrv = {}
 
 kdrv.fs = {}
 kdrv.tty = {}

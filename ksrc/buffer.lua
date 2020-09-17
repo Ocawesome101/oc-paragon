@@ -83,7 +83,6 @@ do
 
   function buf:readNum(n)
     checkArg(1, n, "number")
-    kio.dmesg("readNum:"..n)
     if #self.rbuf < n then
       local reqN = n ~= math.huge and n + math.min(0, self.bufsize - n) or n
       repeat

@@ -29,6 +29,9 @@ do
     end
     setmetatable(k.sb.io, iomt)
     k.sb.k.vfs = table.copy(vfs)
+    k.sb.k.iomt = nil
+    k.sb.k.sched.loop = nil
+    k.sb.k.io.gpu = kio.gpu -- otherwise metatable weirdness
   end
   k.hooks.add("sandbox", sbld)
 end

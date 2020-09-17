@@ -16,7 +16,7 @@
 -- parse kernel arguments
 
 local cmdline = table.concat(table.pack(...), " ") -- ex. "init=/bin/sh loglevel=3 quiet"
-kargs = {}
+local kargs = {}
 
 for word in cmdline:gmatch("[^%s]+") do
   local k, v = word:match("(.-)=(.+)")
@@ -28,12 +28,12 @@ _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
   built   = "2020/09/16",
-  builder = "ocawesome101@archlinux"
+  builder = "ocawesome101@manjaro-pbp"
 }
 
 -- kernel i/o
 
-kio = {}
+local kio = {}
 
 kargs.loglevel = tonumber(kargs.loglevel) or 0
 
@@ -169,11 +169,13 @@ end
 function kio.dmesg(level, msg)
   if not msg then msg = level level = nil end
   level = level or kio.loglevels.INFO
-  local mesg = string.format("[%5.05f] [%s] %s", computer.uptime(), kio.levels[level], msg)
-  if level >= kargs.loglevel then
-    kio.console(mesg)
+  for line in msg:gmatch("[^\n]+") do
+    local mesg = string.format("[%5.05f] [%s] %s", computer.uptime(), kio.levels[level], line)
+    if level >= kargs.loglevel then
+      kio.console(mesg)
+    end
+    table.insert(dmesg, mesg)
   end
-  table.insert(dmesg, mesg)
   return true
 end
 
@@ -288,7 +290,6 @@ do
 
   function buf:readNum(n)
     checkArg(1, n, "number")
-    kio.dmesg("readNum:"..n)
     if #self.rbuf < n then
       local reqN = n ~= math.huge and n + math.min(0, self.bufsize - n) or n
       repeat
@@ -314,7 +315,7 @@ end
 
 kio.dmesg(kio.loglevels.INFO, "ksrc/kdrv.lua")
 
-kdrv = {}
+local kdrv = {}
 
 kdrv.fs = {}
 kdrv.tty = {}
@@ -688,31 +689,29 @@ end
 
 kio.dmesg(kio.loglevels.INFO, "ksrc/util.lua")
 
-do
-  function table.copy(tbl)
-    local seen = {}
-    local function copy(t)
-      local ret = {}
-      for k, v in pairs(t) do
-        if type(v) == "table" then
-          if not seen[v] then
-            seen[v] = true
-            ret[k] = copy(v)
-          end
-        else
-          ret[k] = v
-        end
+function table.copy(t)
+  checkArg(1, t, "table")
+  local seen = {}
+  local function copy(tbl)
+    local ret = {}
+    tbl = tbl or {}
+    for k, v in pairs(tbl) do
+      if type(v) == "table" and not seen[v] then
+        seen[v] = true
+        ret[k] = copy(v)
+      else
+        ret[k] = v
       end
-      return ret
     end
-    return copy(tbl)
+    return ret
   end
+  return copy(t)
 end
 
 -- kernel api
 
 kio.dmesg(kio.loglevels.INFO, "ksrc/kapi.lua")
-k = {}
+_G.k = {}
 k.args    = kargs
 k.io      = kio
 k.info    = _KINFO
@@ -750,6 +749,9 @@ do
     end
     setmetatable(k.sb.io, iomt)
     k.sb.k.vfs = table.copy(vfs)
+    k.sb.k.iomt = nil
+    k.sb.k.sched.loop = nil
+    k.sb.k.io.gpu = kio.gpu -- otherwise metatable weirdness
   end
   k.hooks.add("sandbox", sbld)
 end
@@ -909,19 +911,25 @@ do
   --   Resume all threads in the process.
   function process:resume(...)
     local resumed = computer.uptime()
+    kio.dmesg(kio.loglevels.DEBUG, "resume: process" .. self.pid)
     for i=1, #self.threads, 1 do
       kio.dmesg(kio.loglevels.DEBUG, "process " .. self.pid .. ": resuming thread " .. i)
       local thd = self.threads[i]
       local ok, ec = coroutine.resume(thd.coro, ...)
       if (not ok) or coroutine.status(thd.coro) == "dead" then
-        kio.signal(kio.loglevels.DEBUG, "process " .. self.pid .. ": thread died: " .. i)
+        kio.dmesg(kio.loglevels.DEBUG, "process " .. self.pid .. ": thread died: " .. i)
         self.threads[i] = nil
         computer.pushSignal("thread_died", self.pid, (type(ec) == "string" and 1 or ec), type(ec) == "string" and ec)
       end
       -- TODO: this may result in incorrect yield timeouts with multiple threads
-      local nd = ec + computer.uptime()
-      if nd < self.deadline then
-        self.deadline = nd
+      if type(ec) == "number" then
+        local nd = ec + computer.uptime()
+        if nd < self.deadline then
+          self.deadline = nd
+        end
+      else
+        kio.dmesg(kio.loglevels.DEBUG, tostring(ec))
+        self.deadline = math.huge
       end
     end
     if #self.threads == 0 then
@@ -939,7 +947,7 @@ do
     name = name or "thread" .. #self.threads + 1
     self.threads[#self.threads + 1] = {
       name = name,
-      coro = coroutine.create(func)
+      coro = coroutine.create(function()return assert(xpcall(func, debug.traceback)) end)
     }
     return true
   end
@@ -1099,9 +1107,10 @@ do
   function s.loop()
     s.loop = nil
     local sig
+    kio.dmesg(kio.loglevels.DEBUG, "starting scheduler loop")
     while #procs > 0 do
       sig = table.pack(computer.pullSignal(timeout))
-      local run
+      local run = {}
       for pid, proc in pairs(procs) do
         if not proc.stopped then
           run[#run + 1] = proc
@@ -1115,6 +1124,7 @@ do
         current = proc.pid
         proc:resume(table.unpack(sig))
         if proc.dead then
+          kio.dmesg("process died: " .. proc.pid)
           computer.pushSignal("process_died", proc.pid, proc.name)
           procs[proc.pid] = nil
         end
@@ -1136,13 +1146,13 @@ do
   local vfs = vfs
 
   local iomt = {
-    __index = function(self, k)
+    __index = function(self, key)
       local info = k.sched.getinfo()
-      if k == "stdin" then
+      if key == "stdin" then
         return info:stdin()
-      elseif k == "stdout" then
+      elseif key == "stdout" then
         return info:stdout()
-      elseif k == "stderr" then
+      elseif key == "stderr" then
         return info:stderr()
       end
     end,
@@ -2526,7 +2536,7 @@ do
       else
         local ok, ret = pcall(ok)
         if not ok then
-          kio.dmesg(kio.loglevels.ERROR, files[i]..": "..err)
+          kio.dmesg(kio.loglevels.ERROR, files[i]..": "..ret)
         end
       end
     end
@@ -2656,6 +2666,7 @@ do
   end
   local r, g, b = 0x5f, 0, 0
   local i = 0
+
   repeat
     table.insert(palette, pack(r, g, b))
     b = inc(b)
@@ -2671,17 +2682,21 @@ do
       break
     end
   until r == 0xff and g == 0xff and b == 0xff
+
   table.insert(palette, pack(r,g,b))
+
   for i=0x8, 0xee, 10 do
     table.insert(palette, pack(i,i,i))
   end
+
   local min, max = math.min, math.max
+
   -- vt.new(gpu:string, screen:string): table OR vt.new(gpu:table[, screen:string]): table
   --   This function takes a gpu and screen address and returns a (non-buffered!) stream.
   function vt.new(gpu, screen)
     checkArg(1, gpu, "string", "table")
     checkArg(2, screen, "string", "nil")
-    if type("gpu") == "string" and (component.type(gpu) ~= "gpu" or
+    if type(gpu) == "string" and (component.type(gpu) ~= "gpu" or
           (screen and component.type(screen) ~= "screen")) or gpu.type ~= "gpu"
               then
       return nil, "invalid gpu/screen"
@@ -2698,7 +2713,7 @@ do
     local nb = ""
     local ec = true -- local echo
     local lm = true -- line mode
-    local cx, cy = 0, 0
+    local cx, cy = 1, 1
     local fg, bg = colors[8], colors[1]
     local w, h = gpu.maxResolution()
     gpu.setResolution(w, h)
@@ -3021,5 +3036,7 @@ do
   end
   k.sched.spawn(ok, "[init]", 1)
 end
+
+k.sched.loop()
 
 kio.panic("premature exit!")

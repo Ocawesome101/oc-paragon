@@ -48,7 +48,7 @@ do
       else
         local ok, ret = pcall(ok)
         if not ok then
-          kio.dmesg(kio.loglevels.ERROR, files[i]..": "..err)
+          kio.dmesg(kio.loglevels.ERROR, files[i]..": "..ret)
         end
       end
     end

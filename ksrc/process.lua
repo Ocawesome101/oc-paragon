@@ -71,19 +71,25 @@ do
   --   Resume all threads in the process.
   function process:resume(...)
     local resumed = computer.uptime()
+    kio.dmesg(kio.loglevels.DEBUG, "resume: process" .. self.pid)
     for i=1, #self.threads, 1 do
       kio.dmesg(kio.loglevels.DEBUG, "process " .. self.pid .. ": resuming thread " .. i)
       local thd = self.threads[i]
       local ok, ec = coroutine.resume(thd.coro, ...)
       if (not ok) or coroutine.status(thd.coro) == "dead" then
-        kio.signal(kio.loglevels.DEBUG, "process " .. self.pid .. ": thread died: " .. i)
+        kio.dmesg(kio.loglevels.DEBUG, "process " .. self.pid .. ": thread died: " .. i)
         self.threads[i] = nil
         computer.pushSignal("thread_died", self.pid, (type(ec) == "string" and 1 or ec), type(ec) == "string" and ec)
       end
       -- TODO: this may result in incorrect yield timeouts with multiple threads
-      local nd = ec + computer.uptime()
-      if nd < self.deadline then
-        self.deadline = nd
+      if type(ec) == "number" then
+        local nd = ec + computer.uptime()
+        if nd < self.deadline then
+          self.deadline = nd
+        end
+      else
+        kio.dmesg(kio.loglevels.DEBUG, tostring(ec))
+        self.deadline = math.huge
       end
     end
     if #self.threads == 0 then
@@ -101,7 +107,7 @@ do
     name = name or "thread" .. #self.threads + 1
     self.threads[#self.threads + 1] = {
       name = name,
-      coro = coroutine.create(func)
+      coro = coroutine.create(function()return assert(xpcall(func, debug.traceback)) end)
     }
     return true
   end

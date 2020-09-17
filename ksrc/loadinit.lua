@@ -10,3 +10,5 @@ do
   end
   k.sched.spawn(ok, "[init]", 1)
 end
+
+k.sched.loop()

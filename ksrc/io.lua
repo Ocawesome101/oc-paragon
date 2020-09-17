@@ -9,13 +9,13 @@ do
   local vfs = vfs
 
   local iomt = {
-    __index = function(self, k)
+    __index = function(self, key)
       local info = k.sched.getinfo()
-      if k == "stdin" then
+      if key == "stdin" then
         return info:stdin()
-      elseif k == "stdout" then
+      elseif key == "stdout" then
         return info:stdout()
-      elseif k == "stderr" then
+      elseif key == "stderr" then
         return info:stderr()
       end
     end,

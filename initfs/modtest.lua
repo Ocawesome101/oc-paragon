@@ -1,2 +1,2 @@
 -- test module
-kio.dmesg(kio.loglevels.INFO, "successfully loaded test module!")
+k.io.dmesg(k.io.loglevels.INFO, "successfully loaded test module!")

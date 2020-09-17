@@ -58,6 +58,7 @@ do
   end
   local r, g, b = 0x5f, 0, 0
   local i = 0
+
   repeat
     table.insert(palette, pack(r, g, b))
     b = inc(b)
@@ -73,17 +74,21 @@ do
       break
     end
   until r == 0xff and g == 0xff and b == 0xff
+
   table.insert(palette, pack(r,g,b))
+
   for i=0x8, 0xee, 10 do
     table.insert(palette, pack(i,i,i))
   end
+
   local min, max = math.min, math.max
+
   -- vt.new(gpu:string, screen:string): table OR vt.new(gpu:table[, screen:string]): table
   --   This function takes a gpu and screen address and returns a (non-buffered!) stream.
   function vt.new(gpu, screen)
     checkArg(1, gpu, "string", "table")
     checkArg(2, screen, "string", "nil")
-    if type("gpu") == "string" and (component.type(gpu) ~= "gpu" or
+    if type(gpu) == "string" and (component.type(gpu) ~= "gpu" or
           (screen and component.type(screen) ~= "screen")) or gpu.type ~= "gpu"
               then
       return nil, "invalid gpu/screen"
@@ -100,7 +105,7 @@ do
     local nb = ""
     local ec = true -- local echo
     local lm = true -- line mode
-    local cx, cy = 0, 0
+    local cx, cy = 1, 1
     local fg, bg = colors[8], colors[1]
     local w, h = gpu.maxResolution()
     gpu.setResolution(w, h)

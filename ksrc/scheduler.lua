@@ -76,9 +76,10 @@ do
   function s.loop()
     s.loop = nil
     local sig
+    kio.dmesg(kio.loglevels.DEBUG, "starting scheduler loop")
     while #procs > 0 do
       sig = table.pack(computer.pullSignal(timeout))
-      local run
+      local run = {}
       for pid, proc in pairs(procs) do
         if not proc.stopped then
           run[#run + 1] = proc
@@ -92,6 +93,7 @@ do
         current = proc.pid
         proc:resume(table.unpack(sig))
         if proc.dead then
+          kio.dmesg("process died: " .. proc.pid)
           computer.pushSignal("process_died", proc.pid, proc.name)
           procs[proc.pid] = nil
         end
