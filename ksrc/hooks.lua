@@ -28,6 +28,7 @@ do
       return load(x, name, mode, env or k.sb)
     end
     setmetatable(k.sb.io, iomt)
+    k.sb.k.vfs = table.copy(vfs)
   end
   k.hooks.add("sandbox", sbld)
 end

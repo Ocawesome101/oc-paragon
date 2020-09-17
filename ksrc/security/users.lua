@@ -58,7 +58,7 @@ do
   end
 
   function users.user()
-    return k.sched.getinfo().owner or 0
+    return (k.sched.getinfo() or {}).owner or 0
   end
 
   k.security.users = users

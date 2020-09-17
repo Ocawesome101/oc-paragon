@@ -8,5 +8,5 @@ do
   if not ok then
     kio.panic(err)
   end
-  k.sched.spawn(init, "[init]", 1)
+  k.sched.spawn(ok, "[init]", 1)
 end

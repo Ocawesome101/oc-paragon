@@ -121,6 +121,7 @@ do
     gpu.set(1, y, msg)
   end
 
+  kio.gpu = gpu
   kio.console = console
 end
 
@@ -167,6 +168,7 @@ do
   end
 end
 
+kio.dmesg(kio.loglevels.INFO, string.format("Starting %s version %s - built %s by %s", _KINFO.name, _KINFO.version, _KINFO.built, _KINFO.builder))
+
 --#include "ksrc/buffer.lua"
 
-kio.dmesg(kio.loglevels.INFO, string.format("Starting %s version %s - built %s by %s", _KINFO.name, _KINFO.version, _KINFO.built, _KINFO.builder))

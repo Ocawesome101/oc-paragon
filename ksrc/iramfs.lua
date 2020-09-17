@@ -40,7 +40,7 @@ do
       local ok, err = temp.seek(handle, "set", s)
       if not ok then
         temp.close(handle)
-        return nil, err
+        return "", err
       end
       local data = temp.read(handle, 512)
       temp.close(handle)

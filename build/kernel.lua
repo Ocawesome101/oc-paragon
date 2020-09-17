@@ -26,9 +26,9 @@ end
 
 _G._KINFO = {
   name    = "Paragon",
-  version = "0.0.1",
-  built   = "2020/09/15",
-  builder = "ocawesome101@manjaro-pbp"
+  version = "0.1.0",
+  built   = "2020/09/16",
+  builder = "ocawesome101@archlinux"
 }
 
 -- kernel i/o
@@ -154,6 +154,7 @@ do
     gpu.set(1, y, msg)
   end
 
+  kio.gpu = gpu
   kio.console = console
 end
 
@@ -199,6 +200,8 @@ do
     end
   end
 end
+
+kio.dmesg(kio.loglevels.INFO, string.format("Starting %s version %s - built %s by %s", _KINFO.name, _KINFO.version, _KINFO.built, _KINFO.builder))
 
 -- simple buffer implementation --
 
@@ -285,8 +288,9 @@ do
 
   function buf:readNum(n)
     checkArg(1, n, "number")
+    kio.dmesg("readNum:"..n)
     if #self.rbuf < n then
-      local reqN = n + math.min(0, self.bufsize - n)
+      local reqN = n ~= math.huge and n + math.min(0, self.bufsize - n) or n
       repeat
         local dat = self.stream:read(reqN)
         if not dat then reqN = 0
@@ -295,6 +299,7 @@ do
         end
       until reqN <= 0
     end
+    if n == math.huge then n = #self.rbuf end
     local ret = self.rbuf:sub(1, n)
     self.rbuf = self.rbuf:sub(n + 1)
     return ret
@@ -304,7 +309,6 @@ do
 end
 
 
-kio.dmesg(kio.loglevels.INFO, string.format("Starting %s version %s - built %s by %s", _KINFO.name, _KINFO.version, _KINFO.built, _KINFO.builder))
 
 -- kernel drivers
 
@@ -745,6 +749,7 @@ do
       return load(x, name, mode, env or k.sb)
     end
     setmetatable(k.sb.io, iomt)
+    k.sb.k.vfs = table.copy(vfs)
   end
   k.hooks.add("sandbox", sbld)
 end
@@ -815,7 +820,7 @@ do
   end
 
   function users.user()
-    return k.sched.getinfo().owner or 0
+    return (k.sched.getinfo() or {}).owner or 0
   end
 
   k.security.users = users
@@ -2453,7 +2458,7 @@ do
       local ok, err = temp.seek(handle, "set", s)
       if not ok then
         temp.close(handle)
-        return nil, err
+        return "", err
       end
       local data = temp.read(handle, 512)
       temp.close(handle)
@@ -2671,16 +2676,18 @@ do
     table.insert(palette, pack(i,i,i))
   end
   local min, max = math.min, math.max
-  -- vt.new(gpu:string, screen:string): table
+  -- vt.new(gpu:string, screen:string): table OR vt.new(gpu:table[, screen:string]): table
   --   This function takes a gpu and screen address and returns a (non-buffered!) stream.
   function vt.new(gpu, screen)
-    checkArg(1, gpu, "string")
-    checkArg(2, screen, "string")
-    if component.type(gpu) ~= "gpu" or component.type(screen) ~= "screen" then
+    checkArg(1, gpu, "string", "table")
+    checkArg(2, screen, "string", "nil")
+    if type("gpu") == "string" and (component.type(gpu) ~= "gpu" or
+          (screen and component.type(screen) ~= "screen")) or gpu.type ~= "gpu"
+              then
       return nil, "invalid gpu/screen"
     end
-    gpu = component.proxy(gpu)
-    gpu.bind(screen)
+    if type(gpu) == "string" then gpu = component.proxy(gpu) end
+    if screen then gpu.bind(screen) end
     local mode = 0
     -- TTY modes:
     -- 0: regular text
@@ -3012,7 +3019,7 @@ do
   if not ok then
     kio.panic(err)
   end
-  k.sched.spawn(init, "[init]", 1)
+  k.sched.spawn(ok, "[init]", 1)
 end
 
 kio.panic("premature exit!")

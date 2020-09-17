@@ -83,8 +83,9 @@ do
 
   function buf:readNum(n)
     checkArg(1, n, "number")
+    kio.dmesg("readNum:"..n)
     if #self.rbuf < n then
-      local reqN = n + math.min(0, self.bufsize - n)
+      local reqN = n ~= math.huge and n + math.min(0, self.bufsize - n) or n
       repeat
         local dat = self.stream:read(reqN)
         if not dat then reqN = 0
@@ -93,6 +94,7 @@ do
         end
       until reqN <= 0
     end
+    if n == math.huge then n = #self.rbuf end
     local ret = self.rbuf:sub(1, n)
     self.rbuf = self.rbuf:sub(n + 1)
     return ret

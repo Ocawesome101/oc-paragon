@@ -78,16 +78,18 @@ do
     table.insert(palette, pack(i,i,i))
   end
   local min, max = math.min, math.max
-  -- vt.new(gpu:string, screen:string): table
+  -- vt.new(gpu:string, screen:string): table OR vt.new(gpu:table[, screen:string]): table
   --   This function takes a gpu and screen address and returns a (non-buffered!) stream.
   function vt.new(gpu, screen)
-    checkArg(1, gpu, "string")
-    checkArg(2, screen, "string")
-    if component.type(gpu) ~= "gpu" or component.type(screen) ~= "screen" then
+    checkArg(1, gpu, "string", "table")
+    checkArg(2, screen, "string", "nil")
+    if type("gpu") == "string" and (component.type(gpu) ~= "gpu" or
+          (screen and component.type(screen) ~= "screen")) or gpu.type ~= "gpu"
+              then
       return nil, "invalid gpu/screen"
     end
-    gpu = component.proxy(gpu)
-    gpu.bind(screen)
+    if type(gpu) == "string" then gpu = component.proxy(gpu) end
+    if screen then gpu.bind(screen) end
     local mode = 0
     -- TTY modes:
     -- 0: regular text
