@@ -123,12 +123,27 @@ do
       if cy < 1 then cy = 1 end
     end
 
+    --[[
     local function flushwb()
       while unicode.len(wb) > 0 do
         checkCursor()
         local ln = unicode.sub(wb, 1, w - cx + 1)
-        if ec then gpu.set(cx, cy, ln) cx = cx + unicode.len(ln) end
+        if ec then
+          gpu.set(cx, cy, ln)
+          cx = cx + unicode.len(ln)
+        end
+        wb = unicode.sub(wb, unicode.len(ln) + 1)
       end
+    end]]
+    local function flushwb()
+      while #wb > 0 do
+        checkCursor()
+        local ln = wb:sub(1, w - cx + 1)
+        gpu.set(cx, cy, ln)
+        wb = wb:sub(#ln + 1)
+        cx = cx + #ln
+      end
+      checkCursor()
     end
 
     local stream = {}

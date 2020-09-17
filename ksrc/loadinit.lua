@@ -11,4 +11,7 @@ do
   k.sched.spawn(ok, "[init]", 1)
 end
 
+if not k.sched.loop then
+  kio.panic("SCHED LOOP MISSING")
+end
 k.sched.loop()
