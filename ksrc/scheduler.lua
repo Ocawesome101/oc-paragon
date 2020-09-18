@@ -116,7 +116,27 @@ do
     -- we can safely return only a very limited subset of process info
     function k.sb.process.getinfo(pid)
       checkArg(1, pid, "number", "nil")
-      local rawinfo = k.sched.getinfo(pid)
+      local info = k.sched.getinfo(pid)
+      local ret = {
+        owner = info.owner,
+        started = info.started,
+        runtime = info.runtime,
+        name = info.name
+      }
+      if pid == current then -- we can give a process more info about itself
+        ret.env = info.env
+        ret.io = info.io
+      end
+      return ret
+    end
+
+    function k.sb.process.signal(pid, sig)
+      return k.sched.signal(pid, sig)
+    end
+    k.sb.process.signals = process.signals
+
+    function k.sb.process.thread(func, name)
+      return k.sched.newthread(func, name)
     end
   end)
 end

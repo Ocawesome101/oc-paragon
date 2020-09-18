@@ -146,6 +146,10 @@ function kio.dmesg(level, msg)
   return true
 end
 
+function kio.hide()
+  if kargs.loglevel < 3 then kargs.loglevel = 3 end
+end
+
 do
   local panic = computer.pullSignal
   -- kio.panic(msg:string)

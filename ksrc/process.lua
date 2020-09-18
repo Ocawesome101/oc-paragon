@@ -79,6 +79,7 @@ do
       if (not ok) or coroutine.status(thd.coro) == "dead" then
         kio.dmesg(kio.loglevels.DEBUG, "process " .. self.pid .. ": thread died: " .. i)
         self.threads[i] = nil
+        kio.dmesg(tostring(ec))
         computer.pushSignal("thread_died", self.pid, (type(ec) == "string" and 1 or ec), type(ec) == "string" and ec)
       end
       -- TODO: this may result in incorrect yield timeouts with multiple threads
@@ -120,6 +121,7 @@ do
     return {
       io = self.io,
       env = self.env,
+      name = self.name,
       owner = self.owner,
       started = self.started,
       runtime = self.runtime,

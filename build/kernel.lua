@@ -179,6 +179,10 @@ function kio.dmesg(level, msg)
   return true
 end
 
+function kio.hide()
+  if kargs.loglevel < 3 then kargs.loglevel = 3 end
+end
+
 do
   local panic = computer.pullSignal
   -- kio.panic(msg:string)
@@ -772,8 +776,8 @@ do
     setmetatable(k.sb.io, iomt)
     k.sb.k.vfs = table.copy(vfs)
     k.sb.k.iomt = nil
-    k.sb.k.sched.loop = nil
-    k.sb.k.io.gpu = kio.gpu -- otherwise metatable weirdness
+    k.sb.k.io.gpu = kio.gpu -- otherwise metatable weirdness happens
+    k.sb.k.sb = nil -- just in case
   end
   k.hooks.add("sandbox", sbld)
 end
@@ -850,12 +854,16 @@ do
   k.security.users = users
 end
 
--- add sandbox hook to prevent userspace from easily spoofing user IDs
+-- add sandbox hooks
 do
   k.hooks.add("sandbox", function()
-    function k.sb.sched.spawn(a,b,c)
-      return k.sched.spawn(a,b,c)
-    end
+    -- raw component restrictions
+    sb.component = setmetatable({}, {__index = function(_,m)
+      if k.security.users.user() ~= 0 then
+        error(select(2, kio.error("PERMISSION_DENIED")))
+      end
+      return component[m]
+    end, __metatable = {}})
   end)
 end
 
@@ -941,6 +949,7 @@ do
       if (not ok) or coroutine.status(thd.coro) == "dead" then
         kio.dmesg(kio.loglevels.DEBUG, "process " .. self.pid .. ": thread died: " .. i)
         self.threads[i] = nil
+        kio.dmesg(tostring(ec))
         computer.pushSignal("thread_died", self.pid, (type(ec) == "string" and 1 or ec), type(ec) == "string" and ec)
       end
       -- TODO: this may result in incorrect yield timeouts with multiple threads
@@ -982,6 +991,7 @@ do
     return {
       io = self.io,
       env = self.env,
+      name = self.name,
       owner = self.owner,
       started = self.started,
       runtime = self.runtime,
@@ -1158,6 +1168,40 @@ do
     kio.panic("All processes died!")
   end
   k.sched = s
+
+  k.hooks.add("sandbox", function()
+    -- userspace process api
+    k.sb.process = {}
+    function k.sb.process.spawn(a,b,c)
+      return k.sched.spawn(a,b,c)
+    end
+
+    -- we can safely return only a very limited subset of process info
+    function k.sb.process.getinfo(pid)
+      checkArg(1, pid, "number", "nil")
+      local info = k.sched.getinfo(pid)
+      local ret = {
+        owner = info.owner,
+        started = info.started,
+        runtime = info.runtime,
+        name = info.name
+      }
+      if pid == current then -- we can give a process more info about itself
+        ret.env = info.env
+        ret.io = info.io
+      end
+      return ret
+    end
+
+    function k.sb.process.signal(pid, sig)
+      return k.sched.signal(pid, sig)
+    end
+    k.sb.process.signals = process.signals
+
+    function k.sb.process.thread(func, name)
+      return k.sched.newthread(func, name)
+    end
+  end)
 end
 
 -- buffered file I/O and misc other --
