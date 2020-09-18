@@ -361,6 +361,10 @@ do
       return ret
     end
     
+    local boards = {}
+    for k,v in pairs(component.invoke(screen or gpu.getScreen(), "getKeyboards")) do
+      boards[v] = true
+    end
     local sub = {
       [200] = "\27[A",
       [201] = "\27[5~",
@@ -372,7 +376,7 @@ do
     -- key input listener. this is a kernel event listener, so it should be
     -- faster than using a thread, especially per-terminal.
     local function listener(sig, addr, char, code)
-      if addr == screen then
+      if boards[addr] then
         if char == 0 then
           char = sub[code] or ""
         elseif char == 8 and lm then
