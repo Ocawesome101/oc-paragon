@@ -28,7 +28,7 @@ _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
   built   = "2020/09/18",
-  builder = "ocawesome101@archlinux"
+  builder = "ocawesome101@manjaro-pbp"
 }
 
 -- kernel i/o
@@ -1091,6 +1091,9 @@ do
       stderr = p and p.io.stderr or {},
       owner = INTERNAL_UNDOCUMENTED_ARGUMENT
     }
+    --[[new:stdin(p and p.io.stdin)
+    new:stdout(p and p.io.stdout)
+    new:stderr(p and p.io.stderr)]]
     new:addThread(func)
     procs[new.pid] = new
     return new -- the userspace function will just return the PID
@@ -1310,10 +1313,10 @@ do
     local sig = table.pack(ps(timeout))
     if sig.n > 0 then
       for k, v in pairs(listeners) do
-        if v.signal == sig[1] then
-          local ok, ret = pcall(v.callback, table.unpack(sig))
+        if v.sig == sig[1] then
+          local ok, ret = pcall(v.func, table.unpack(sig))
           if not ok and ret then
-            kio.dmesg(kio.loglevels.WARNING, "event handler error: " .. ret)
+            kio.dmesg(kio.loglevels.ERROR, "event handler error: " .. ret)
           end
         end
       end
@@ -1342,6 +1345,9 @@ do
     return true
   end
 
+  -- users may expect these to exist
+  event.pull = computer.pullSignal
+  event.push = computer.pushSignal
   k.evt = event
 end
 
@@ -1953,10 +1959,10 @@ do
     local sig = table.pack(ps(timeout))
     if sig.n > 0 then
       for k, v in pairs(listeners) do
-        if v.signal == sig[1] then
-          local ok, ret = pcall(v.callback, table.unpack(sig))
+        if v.sig == sig[1] then
+          local ok, ret = pcall(v.func, table.unpack(sig))
           if not ok and ret then
-            kio.dmesg(kio.loglevels.WARNING, "event handler error: " .. ret)
+            kio.dmesg(kio.loglevels.ERROR, "event handler error: " .. ret)
           end
         end
       end
@@ -1985,6 +1991,9 @@ do
     return true
   end
 
+  -- users may expect these to exist
+  event.pull = computer.pullSignal
+  event.push = computer.pushSignal
   k.evt = event
 end
 

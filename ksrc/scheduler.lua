@@ -27,6 +27,9 @@ do
       stderr = p and p.io.stderr or {},
       owner = INTERNAL_UNDOCUMENTED_ARGUMENT
     }
+    --[[new:stdin(p and p.io.stdin)
+    new:stdout(p and p.io.stdout)
+    new:stderr(p and p.io.stderr)]]
     new:addThread(func)
     procs[new.pid] = new
     return new -- the userspace function will just return the PID

@@ -13,10 +13,10 @@ do
     local sig = table.pack(ps(timeout))
     if sig.n > 0 then
       for k, v in pairs(listeners) do
-        if v.signal == sig[1] then
-          local ok, ret = pcall(v.callback, table.unpack(sig))
+        if v.sig == sig[1] then
+          local ok, ret = pcall(v.func, table.unpack(sig))
           if not ok and ret then
-            kio.dmesg(kio.loglevels.WARNING, "event handler error: " .. ret)
+            kio.dmesg(kio.loglevels.ERROR, "event handler error: " .. ret)
           end
         end
       end
@@ -45,5 +45,8 @@ do
     return true
   end
 
+  -- users may expect these to exist
+  event.pull = computer.pullSignal
+  event.push = computer.pushSignal
   k.evt = event
 end
