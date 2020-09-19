@@ -27,7 +27,7 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
-  built   = "2020/09/18",
+  built   = "2020/09/19",
   builder = "ocawesome101@manjaro-pbp"
 }
 
@@ -2856,9 +2856,11 @@ do
       while #wb > 0 do
         checkCursor()
         local ln = wb:sub(1, w - cx + 1)
-        gpu.set(cx, cy, ln)
+        if ec then
+          gpu.set(cx, cy, ln)
+          cx = cx + #ln
+        end
         wb = wb:sub(#ln + 1)
-        cx = cx + #ln
       end
       checkCursor()
     end

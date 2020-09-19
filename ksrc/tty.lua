@@ -139,9 +139,11 @@ do
       while #wb > 0 do
         checkCursor()
         local ln = wb:sub(1, w - cx + 1)
-        gpu.set(cx, cy, ln)
+        if ec then
+          gpu.set(cx, cy, ln)
+          cx = cx + #ln
+        end
         wb = wb:sub(#ln + 1)
-        cx = cx + #ln
       end
       checkCursor()
     end
