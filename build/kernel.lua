@@ -27,8 +27,8 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
-  built   = "2020/09/17",
-  builder = "ocawesome101@manjaro-pbp"
+  built   = "2020/09/18",
+  builder = "ocawesome101@archlinux"
 }
 
 -- kernel i/o
@@ -919,7 +919,8 @@ do
       runtime = 0,                        -- time the process has spent running
       deadline = 0,                       -- signal wait deadline
       owner = k.security.users.user(),    -- process owner
-      tty = false,                        -- false if not associated with a tty,
+      tty = args.stdin and args.stdin.tty
+      or false,                           -- false if not associated with a tty,
                                           -- else a string in the format "ttyN"
                                           -- where N is the tty id
       msgs = {},                          -- internal thread message queue
