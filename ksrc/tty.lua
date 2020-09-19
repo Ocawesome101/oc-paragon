@@ -380,10 +380,13 @@ do
         if char == 0 then
           char = sub[code] or ""
         elseif char == 8 and lm then
-          rb = unicode.sub(rb, 1, unicode.len(rb) - 1)
-          stream:write("\8 \8")
+          if #rb > 0 and unicode.sub(rb, unicode.len(rb)) ~= "\n" then
+            rb = unicode.sub(rb, 1, unicode.len(rb) - 1)
+            stream:write("\8 \8")
+          end
           return true
         else
+          if char == 13 then char = 10 end
           char = unicode.char(char)
         end
         rb = rb .. char
