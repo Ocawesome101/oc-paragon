@@ -80,5 +80,15 @@ do
     return io.stdout:write(...)
   end
 
+  k.hooks.add("sandbox", function()
+    function k.sb.print(...)
+      local args = table.pack(...)
+      for i=1, args.n, 1 do
+        args[i] = tostring(args[i])
+      end
+      io.write(table.concat(args, "\t") .. "\n")
+      return true
+    end
+  end)
   --TODO: flesh out io, maybe in userspace?
 end

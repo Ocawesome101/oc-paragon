@@ -27,7 +27,7 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
-  built   = "2020/09/19",
+  built   = "2020/09/20",
   builder = "ocawesome101@manjaro-pbp"
 }
 
@@ -270,15 +270,16 @@ do
   function buf:write(...)
     local args = table.pack(...)
     for i=1, args.n, 1 do
-      checkArg(i, dat, "string", "number")
+      checkArg(i, args[i], "string", "number")
     end
     local dat = table.concat(args)
     self.wbuf = self.wbuf .. dat
-    if #self.wbuf > self.bufsize then
+    if (#self.wbuf > self.bufsize) or self.tty then
       local wrt = self.wbuf
       self.wbuf = ""
       self.stream:write(wrt)
     end
+    return true
   end
 
   function buf:flush()
@@ -840,7 +841,12 @@ do
     if not ok then
       return nil, msgs[code <= 1 and code or 3]
     end
-    local pid = k.sched.spawn(func, name, nil, uid)
+    local pid = k.sched.spawn(function()
+      local inf = k.sched.getinfo()
+      inf.env.HOME = upasswd[uid].home
+      inf.env.SHELL = upasswd[uid].shell
+      func()
+    end, name, nil, uid)
     repeat
       coroutine.yield()
     until not k.sched.getinfo(pid)
@@ -1320,6 +1326,16 @@ do
     return io.stdout:write(...)
   end
 
+  k.hooks.add("sandbox", function()
+    function k.sb.print(...)
+      local args = table.pack(...)
+      for i=1, args.n, 1 do
+        args[i] = tostring(args[i])
+      end
+      io.write(table.concat(args, "\t") .. "\n")
+      return true
+    end
+  end)
   --TODO: flesh out io, maybe in userspace?
 end
 
@@ -3060,17 +3076,18 @@ do
       if self.closed then
         return kio.error("IO_ERROR")
       end
-      if n == math.huge then
-        rb = ""
-        return rb
-      end
-      if n and lm then
+      if n and not lm then
+        if n == math.huge then
+          local tmp = rb
+          rb = ""
+          return rb
+        end
         while (unicode.len(rb) < n) do
           coroutine.yield()
         end
       else
-        n = n or 0
-        while not (unicode.len(rb) < n and rb:find("\n")) do
+        local m = n or 0
+        while unicode.len(rb) < m or not rb:find("\n") do
           coroutine.yield()
         end
       end

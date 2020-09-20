@@ -343,17 +343,18 @@ do
       if self.closed then
         return kio.error("IO_ERROR")
       end
-      if n == math.huge then
-        rb = ""
-        return rb
-      end
-      if n and lm then
+      if n and not lm then
+        if n == math.huge then
+          local tmp = rb
+          rb = ""
+          return rb
+        end
         while (unicode.len(rb) < n) do
           coroutine.yield()
         end
       else
-        n = n or 0
-        while not (unicode.len(rb) < n and rb:find("\n")) do
+        local m = n or 0
+        while unicode.len(rb) < m or not rb:find("\n") do
           coroutine.yield()
         end
       end

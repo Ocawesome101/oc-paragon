@@ -59,15 +59,16 @@ do
   function buf:write(...)
     local args = table.pack(...)
     for i=1, args.n, 1 do
-      checkArg(i, dat, "string", "number")
+      checkArg(i, args[i], "string", "number")
     end
     local dat = table.concat(args)
     self.wbuf = self.wbuf .. dat
-    if #self.wbuf > self.bufsize then
+    if (#self.wbuf > self.bufsize) or self.tty then
       local wrt = self.wbuf
       self.wbuf = ""
       self.stream:write(wrt)
     end
+    return true
   end
 
   function buf:flush()
