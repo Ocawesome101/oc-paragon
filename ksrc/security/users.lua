@@ -28,19 +28,23 @@ do
     "permission denied"
   }
 
+  -- users.checkAuth(uid:number, passwd:string): boolean or nil, string
+  --   Check if the provided credentials are valid.
   function users.checkAuth(uid, passwd, _)
     checkArg(1, uid, "number")
     checkArg(2, passwd, "string")
     if not upasswd[uid] then
       return nil, _ and 1 or msgs[1]
     end
-    if string.hex(k.sha3.sha512(passwd)) == upasswd[uid].hash then
+    if string.hex(k.sha3.sha256(passwd)) == upasswd[uid].hash then
       return true
     else
       return nil, _ and 2 or msgs[2]
     end
   end
 
+  -- users.spawnAs(uid:number, passwd:string, func:function, name:string): boolean or nil, string
+  --   Tries to spawn a process from the provided function as user `uid`.
   function users.spawnAs(uid, passwd, func, name)
     checkArg(1, uid, "number")
     checkArg(2, passwd, "string")
@@ -62,8 +66,32 @@ do
     return true
   end
 
+  -- users.user(): number
+  --   Returns the current process's owner.
   function users.user()
     return (k.sched.getinfo() or {}).owner or 0
+  end
+
+  -- users.getuid(name:string): number or nil, string
+  --   Returns the UID associated with the provided name.
+  function users.getuid(name)
+    checkArg(1, name, "string")
+    for uid, dat in pairs(upasswd) do
+      if dat.name == name then
+        return uid
+      end
+    end
+    return nil, msgs[1]
+  end
+
+  -- users.getname(uid:number): string or nil, string
+  --   Returns the username associated with the provided UID.
+  function users.getname(uid)
+    checkArg(1, uid, "number")
+    if not upasswd[uid] then
+      return nil, msgs[1]
+    end
+    return upasswd[uid].name
   end
 
   k.security.users = users

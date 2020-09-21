@@ -27,7 +27,7 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
-  built   = "2020/09/20",
+  built   = "2020/09/21",
   builder = "ocawesome101@manjaro-pbp"
 }
 
@@ -733,6 +733,15 @@ do
       computer.pushSignal(table.unpack(miss[i]))
     end
   end
+
+  function string.hex(str)
+    checkArg(1, str, "string")
+    local ret = ""
+    for c in str:gmatch(".") do
+      ret = string.format("%s%02x", ret, c:byte())
+    end
+    return ret
+  end
 end
 
 -- kernel api
@@ -819,19 +828,23 @@ do
     "permission denied"
   }
 
+  -- users.checkAuth(uid:number, passwd:string): boolean or nil, string
+  --   Check if the provided credentials are valid.
   function users.checkAuth(uid, passwd, _)
     checkArg(1, uid, "number")
     checkArg(2, passwd, "string")
     if not upasswd[uid] then
       return nil, _ and 1 or msgs[1]
     end
-    if string.hex(k.sha3.sha512(passwd)) == upasswd[uid].hash then
+    if string.hex(k.sha3.sha256(passwd)) == upasswd[uid].hash then
       return true
     else
       return nil, _ and 2 or msgs[2]
     end
   end
 
+  -- users.spawnAs(uid:number, passwd:string, func:function, name:string): boolean or nil, string
+  --   Tries to spawn a process from the provided function as user `uid`.
   function users.spawnAs(uid, passwd, func, name)
     checkArg(1, uid, "number")
     checkArg(2, passwd, "string")
@@ -853,8 +866,32 @@ do
     return true
   end
 
+  -- users.user(): number
+  --   Returns the current process's owner.
   function users.user()
     return (k.sched.getinfo() or {}).owner or 0
+  end
+
+  -- users.getuid(name:string): number or nil, string
+  --   Returns the UID associated with the provided name.
+  function users.getuid(name)
+    checkArg(1, name, "string")
+    for uid, dat in pairs(upasswd) do
+      if dat.name == name then
+        return uid
+      end
+    end
+    return nil, msgs[1]
+  end
+
+  -- users.getname(uid:number): string or nil, string
+  --   Returns the username associated with the provided UID.
+  function users.getname(uid)
+    checkArg(1, uid, "number")
+    if not upasswd[uid] then
+      return nil, msgs[1]
+    end
+    return upasswd[uid].name
   end
 
   k.security.users = users
@@ -3072,29 +3109,50 @@ do
     -- stream:read([n:number]): string or nil, string
     --   Returns characters from the keyboard input buffer.
     function stream:read(n)
-      checkArg(1, n, "number", "nil")
+      checkArg(1, n, "string", "number", "nil")
       if self.closed then
         return kio.error("IO_ERROR")
       end
-      if n and not lm then
-        if n == math.huge then
-          local tmp = rb
+      if type(n) == "string" then
+        if lm or n == "l" or n == "L" then
+          while not rb:find("\n") do
+            coroutine.yield()
+          end
+        end
+        local ret
+        if n == "a" then
+          ret = rb
           rb = ""
-          return rb
+        elseif n == "l" then
+          ret = rb:sub(1, (rb:find("\n")))
+          rb = rb:sub(#ret + 1)
+          ret = ret:gsub("\n", "")
+        elseif n == "L" then
+          ret = rb:sub(1, (rb:find("\n")))
+          rb = rb:sub(#ret + 1)
         end
-        while (unicode.len(rb) < n) do
-          coroutine.yield()
-        end
+        return ret
       else
-        local m = n or 0
-        while unicode.len(rb) < m or not rb:find("\n") do
-          coroutine.yield()
+        if n and not lm then
+          if n == math.huge then
+            local tmp = rb
+            rb = ""
+            return rb
+          end
+          while (unicode.len(rb) < n) do
+            coroutine.yield()
+          end
+        else
+          local m = n or 0
+          while unicode.len(rb) < m or not rb:find("\n") do
+            coroutine.yield()
+          end
         end
       end
       n = n or rb:find("\n")
       local ret = rb:sub(1, n)
       rb = rb:sub(n + 1)
-      return ret
+      return ret:gsub("\n", "") -- default to "l"
     end
     
     local boards = {}

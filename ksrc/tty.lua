@@ -339,29 +339,50 @@ do
     -- stream:read([n:number]): string or nil, string
     --   Returns characters from the keyboard input buffer.
     function stream:read(n)
-      checkArg(1, n, "number", "nil")
+      checkArg(1, n, "string", "number", "nil")
       if self.closed then
         return kio.error("IO_ERROR")
       end
-      if n and not lm then
-        if n == math.huge then
-          local tmp = rb
+      if type(n) == "string" then
+        if lm or n == "l" or n == "L" then
+          while not rb:find("\n") do
+            coroutine.yield()
+          end
+        end
+        local ret
+        if n == "a" then
+          ret = rb
           rb = ""
-          return rb
+        elseif n == "l" then
+          ret = rb:sub(1, (rb:find("\n")))
+          rb = rb:sub(#ret + 1)
+          ret = ret:gsub("\n", "")
+        elseif n == "L" then
+          ret = rb:sub(1, (rb:find("\n")))
+          rb = rb:sub(#ret + 1)
         end
-        while (unicode.len(rb) < n) do
-          coroutine.yield()
-        end
+        return ret
       else
-        local m = n or 0
-        while unicode.len(rb) < m or not rb:find("\n") do
-          coroutine.yield()
+        if n and not lm then
+          if n == math.huge then
+            local tmp = rb
+            rb = ""
+            return rb
+          end
+          while (unicode.len(rb) < n) do
+            coroutine.yield()
+          end
+        else
+          local m = n or 0
+          while unicode.len(rb) < m or not rb:find("\n") do
+            coroutine.yield()
+          end
         end
       end
       n = n or rb:find("\n")
       local ret = rb:sub(1, n)
       rb = rb:sub(n + 1)
-      return ret
+      return ret:gsub("\n", "") -- default to "l"
     end
     
     local boards = {}

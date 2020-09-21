@@ -41,4 +41,13 @@ do
       computer.pushSignal(table.unpack(miss[i]))
     end
   end
+
+  function string.hex(str)
+    checkArg(1, str, "string")
+    local ret = ""
+    for c in str:gmatch(".") do
+      ret = string.format("%s%02x", ret, c:byte())
+    end
+    return ret
+  end
 end
