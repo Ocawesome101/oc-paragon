@@ -28,7 +28,7 @@ _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
   built   = "2020/09/21",
-  builder = "ocawesome101@manjaro-pbp"
+  builder = "ocawesome101@archlinux"
 }
 
 -- kernel i/o
@@ -987,9 +987,7 @@ do
   --   Resume all threads in the process.
   function process:resume(...)
     local resumed = computer.uptime()
-    kio.dmesg(kio.loglevels.DEBUG, "resume: process" .. self.pid)
     for i=1, #self.threads, 1 do
-      kio.dmesg(kio.loglevels.DEBUG, "process " .. self.pid .. ": resuming thread " .. i)
       local thd = self.threads[i]
       local ok, ec = coroutine.resume(thd.coro, ...)
       if (not ok) or coroutine.status(thd.coro) == "dead" then
@@ -1164,7 +1162,7 @@ do
     end
     local proc = procs[pid]
     if proc.owner == s.getinfo().owner or s.getinfo().owner == 0 then
-      proc:signal(sig)
+      proc:handle(sig)
     else
       return kio.error("PERMISSION_DENIED")
     end
@@ -1240,6 +1238,10 @@ do
         ret.io = info.io
       end
       return ret
+    end
+
+    function k.sb.process.current()
+      return current
     end
 
     function k.sb.process.signal(pid, sig)
@@ -3132,6 +3134,8 @@ do
         elseif n == "L" then
           ret = rb:sub(1, (rb:find("\n")))
           rb = rb:sub(#ret + 1)
+        else
+          error("bad argument to read (expected a, l, or L)")
         end
         return ret
       else

@@ -72,9 +72,7 @@ do
   --   Resume all threads in the process.
   function process:resume(...)
     local resumed = computer.uptime()
-    kio.dmesg(kio.loglevels.DEBUG, "resume: process" .. self.pid)
     for i=1, #self.threads, 1 do
-      kio.dmesg(kio.loglevels.DEBUG, "process " .. self.pid .. ": resuming thread " .. i)
       local thd = self.threads[i]
       local ok, ec = coroutine.resume(thd.coro, ...)
       if (not ok) or coroutine.status(thd.coro) == "dead" then

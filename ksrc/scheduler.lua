@@ -55,7 +55,7 @@ do
     end
     local proc = procs[pid]
     if proc.owner == s.getinfo().owner or s.getinfo().owner == 0 then
-      proc:signal(sig)
+      proc:handle(sig)
     else
       return kio.error("PERMISSION_DENIED")
     end
@@ -131,6 +131,10 @@ do
         ret.io = info.io
       end
       return ret
+    end
+
+    function k.sb.process.current()
+      return current
     end
 
     function k.sb.process.signal(pid, sig)

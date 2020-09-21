@@ -360,6 +360,8 @@ do
         elseif n == "L" then
           ret = rb:sub(1, (rb:find("\n")))
           rb = rb:sub(#ret + 1)
+        else
+          error("bad argument to read (expected a, l, or L)")
         end
         return ret
       else
