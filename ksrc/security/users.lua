@@ -55,9 +55,11 @@ do
       return nil, msgs[code <= 1 and code or 3]
     end
     local pid = k.sched.spawn(function()
-      local inf = k.sched.getinfo()
-      inf.env.HOME = upasswd[uid].home
-      inf.env.SHELL = upasswd[uid].shell
+      local env = k.sched.getinfo().env
+      env.HOME = upasswd[uid].home
+      env.SHELL = upasswd[uid].shell
+      env.UID = tostring(uid)
+      env.USER = upasswd[uid].name
       func()
     end, name, nil, uid)
     repeat
