@@ -2,7 +2,9 @@
 
 local addr, invoke = computer.getBootAddress(), component.invoke
 
-local flags = string.format("root=managed(%s,1) boot=managed(%s,1) loglevel=1", addr, addr)
+local flags = string.format(
+  "root=managed(%s,1) boot=managed(%s,1) loglevel=0 scheduler.timeout=1"
+    , addr, addr)
 
 local kernelPath = "/boot/paragon"
 
