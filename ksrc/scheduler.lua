@@ -110,7 +110,7 @@ do
     -- userspace process api
     k.sb.process = {}
     function k.sb.process.spawn(a,b,c)
-      return k.sched.spawn(a,b,c)
+      return k.sched.spawn(a,b,c).pid
     end
 
     -- we can safely return only a very limited subset of process info

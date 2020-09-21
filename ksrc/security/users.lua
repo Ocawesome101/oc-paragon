@@ -54,7 +54,7 @@ do
     if not ok then
       return nil, msgs[code <= 1 and code or 3]
     end
-    local pid = k.sched.spawn(function()
+    local proc = k.sched.spawn(function()
       local env = k.sched.getinfo().env
       env.HOME = upasswd[uid].home
       env.SHELL = upasswd[uid].shell
@@ -64,7 +64,7 @@ do
     end, name, nil, uid)
     repeat
       coroutine.yield()
-    until not k.sched.getinfo(pid)
+    until not k.sched.getinfo(proc.pid)
     return true
   end
 

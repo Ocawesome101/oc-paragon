@@ -854,7 +854,7 @@ do
     if not ok then
       return nil, msgs[code <= 1 and code or 3]
     end
-    local pid = k.sched.spawn(function()
+    local proc = k.sched.spawn(function()
       local env = k.sched.getinfo().env
       env.HOME = upasswd[uid].home
       env.SHELL = upasswd[uid].shell
@@ -864,7 +864,7 @@ do
     end, name, nil, uid)
     repeat
       coroutine.yield()
-    until not k.sched.getinfo(pid)
+    until not k.sched.getinfo(proc.pid)
     return true
   end
 
@@ -1219,7 +1219,7 @@ do
     -- userspace process api
     k.sb.process = {}
     function k.sb.process.spawn(a,b,c)
-      return k.sched.spawn(a,b,c)
+      return k.sched.spawn(a,b,c).pid
     end
 
     -- we can safely return only a very limited subset of process info
