@@ -123,7 +123,7 @@ do
         runtime = info.runtime,
         name = info.name
       }
-      if pid == current then -- we can give a process more info about itself
+      if not pid then -- we can give a process more info about itself
         ret.env = info.env
         ret.io = info.io
       end
