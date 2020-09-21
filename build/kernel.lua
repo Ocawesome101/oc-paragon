@@ -1225,7 +1225,10 @@ do
     -- we can safely return only a very limited subset of process info
     function k.sb.process.info(pid)
       checkArg(1, pid, "number", "nil")
-      local info = k.sched.getinfo(pid)
+      local info, err = k.sched.getinfo(pid)
+      if not info then
+        return nil, err
+      end
       local ret = {
         owner = info.owner,
         started = info.started,
