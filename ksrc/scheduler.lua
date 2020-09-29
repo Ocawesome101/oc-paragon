@@ -77,9 +77,12 @@ do
     s.loop = nil
     kio.dmesg(kio.loglevels.DEBUG, "starting scheduler loop")
     while #procs > 0 do
+      kio.dmesg(kio.loglevels.DEBUG, "sched: pullSignal")
       local sig = table.pack(computer.pullSignal(timeout))
+      kio.dmesg(kio.loglevels.DEBUG, "sched: gotsig")
       kio.dmesg(kio.loglevels.DEBUG, tostring(sig[1]) .. " " .. tostring(sig[2]) .. " " .. tostring(sig[3]))
       local run = {}
+      kio.dmesg(kio.loglevels.DEBUG, "sched: run processes")
       for pid, proc in pairs(procs) do
         if not proc.stopped then
           run[#run + 1] = proc

@@ -172,9 +172,9 @@ function kio.dmesg(level, msg)
   level = level or kio.loglevels.INFO
   for line in msg:gmatch("[^\n]+") do
     local mesg = string.format("[%5.05f] [%s] %s", computer.uptime(), kio.levels[level], line)
-    if level >= kargs.loglevel then
+--    if level >= kargs.loglevel then
       kio.console(mesg)
-    end
+--    end
 --    table.insert(dmesg, mesg)
   end
   return true
@@ -1185,9 +1185,12 @@ do
     s.loop = nil
     kio.dmesg(kio.loglevels.DEBUG, "starting scheduler loop")
     while #procs > 0 do
+      kio.dmesg(kio.loglevels.DEBUG, "sched: pullSignal")
       local sig = table.pack(computer.pullSignal(timeout))
+      kio.dmesg(kio.loglevels.DEBUG, "sched: gotsig")
       kio.dmesg(kio.loglevels.DEBUG, tostring(sig[1]) .. " " .. tostring(sig[2]) .. " " .. tostring(sig[3]))
       local run = {}
+      kio.dmesg(kio.loglevels.DEBUG, "sched: run processes")
       for pid, proc in pairs(procs) do
         if not proc.stopped then
           run[#run + 1] = proc
@@ -1399,8 +1402,9 @@ do
 
   function computer.pullSignal(timeout)
     checkArg(1, timeout, "number", "nil")
-
+    kio.dmesg(kio.loglevels.DEBUG, "evt: ps")
     local sig = table.pack(ps(timeout))
+    kio.dmesg(kio.loglevels.DEBUG, "evt: gotsig")
     if sig.n > 0 then
       for k, v in pairs(listeners) do
         if v.sig == sig[1] then
@@ -1412,7 +1416,16 @@ do
       end
     end
 
+    kio.dmesg(kio.loglevels.DEBUG, "evt: did listeners")
     return table.unpack(sig)
+  end
+  do
+    local p = computer.pushSignal
+    function computer.pushSignal(...)
+      local s = table.pack(...)
+      kio.dmesg(kio.loglevels.DEBUG, string.format("PUSH %s %s %s", tostring(s[1]), tostring(s[2]), tostring(s[3])))
+      p(...)
+    end
   end
 
   function event.register(sig, func)
@@ -2045,8 +2058,9 @@ do
 
   function computer.pullSignal(timeout)
     checkArg(1, timeout, "number", "nil")
-
+    kio.dmesg(kio.loglevels.DEBUG, "evt: ps")
     local sig = table.pack(ps(timeout))
+    kio.dmesg(kio.loglevels.DEBUG, "evt: gotsig")
     if sig.n > 0 then
       for k, v in pairs(listeners) do
         if v.sig == sig[1] then
@@ -2058,7 +2072,16 @@ do
       end
     end
 
+    kio.dmesg(kio.loglevels.DEBUG, "evt: did listeners")
     return table.unpack(sig)
+  end
+  do
+    local p = computer.pushSignal
+    function computer.pushSignal(...)
+      local s = table.pack(...)
+      kio.dmesg(kio.loglevels.DEBUG, string.format("PUSH %s %s %s", tostring(s[1]), tostring(s[2]), tostring(s[3])))
+      p(...)
+    end
   end
 
   function event.register(sig, func)
