@@ -24,6 +24,7 @@
 --#include "ksrc/security.lua"
 --#include "ksrc/process.lua"
 --#include "ksrc/scheduler.lua"
+---#include "ksrc/thread.lua"
 --#include "ksrc/hostname.lua"
 --#include "ksrc/io.lua"
 --#include "ktmp/exec.lua"

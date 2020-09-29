@@ -58,6 +58,7 @@ function _pipe:read(n)
     return ret
   end
   while #self.buf < n and self.strict do
+    kio.dmesg("PIPEYIELD")
     coroutine.yield()
   end
   n = math.min(n, #self.buf)

@@ -78,6 +78,7 @@ do
     kio.dmesg(kio.loglevels.DEBUG, "starting scheduler loop")
     while #procs > 0 do
       local sig = table.pack(computer.pullSignal(timeout))
+      kio.dmesg(kio.loglevels.DEBUG, tostring(sig[1]) .. " " .. tostring(sig[2]) .. " " .. tostring(sig[3]))
       local run = {}
       for pid, proc in pairs(procs) do
         if not proc.stopped then

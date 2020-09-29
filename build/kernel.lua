@@ -27,8 +27,8 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
-  built   = "2020/09/21",
-  builder = "ocawesome101@archlinux"
+  built   = "2020/09/29",
+  builder = "ocawesome101@manjaro-pbp"
 }
 
 -- kernel i/o
@@ -91,6 +91,7 @@ function _pipe:read(n)
     return ret
   end
   while #self.buf < n and self.strict do
+    kio.dmesg("PIPEYIELD")
     coroutine.yield()
   end
   n = math.min(n, #self.buf)
@@ -1185,6 +1186,7 @@ do
     kio.dmesg(kio.loglevels.DEBUG, "starting scheduler loop")
     while #procs > 0 do
       local sig = table.pack(computer.pullSignal(timeout))
+      kio.dmesg(kio.loglevels.DEBUG, tostring(sig[1]) .. " " .. tostring(sig[2]) .. " " .. tostring(sig[3]))
       local run = {}
       for pid, proc in pairs(procs) do
         if not proc.stopped then
@@ -1255,6 +1257,7 @@ do
   end)
 end
 
+---#include "ksrc/thread.lua"
 -- hostname --
 
 do
