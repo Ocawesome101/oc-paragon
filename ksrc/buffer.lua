@@ -3,102 +3,157 @@
 kio.dmesg(kio.loglevels.INFO, "ksrc/buffer.lua")
 
 do
-  local buf = {}
-  local mt = {
-    __index = buf,
-    __metatable = "file"
+
+local buffer = {}
+
+function buffer.new(stream, mode)
+  local new = {
+    tty = false,
+    mode = {},
+    rbuf = "",
+    wbuf = "",
+    stream = stream,
+    closed = false,
+    bufsize = math.max(512, math.min(8 * 1024, computer.freeMemory() / 8))
   }
-
-  function buf.new(stream, mode)
-    checkArg(1, stream, "table")
-    checkArg(2, mode, "string")
-    local new = {
-      stream = stream,
-      mode = {},
-      tty = false, -- if true, then returned stream is not buffered
-      rbuf = "",
-      wbuf = "",
-      closed = false,
-      bufsize = 512
-    }
-    for c in mode:gmatch(".") do
-      new.mode[c] = true
-    end
-    return setmetatable(new, mt)
+  for c in mode:gmatch(".") do
+    new.mode[c] = true
   end
+  local ts = tostring(new):gsub("table", "FILE")
+  return setmetatable(new, {
+    __index = buffer,
+    __tostring = function()
+      return ts
+    end,
+    __metatable = {}
+  })
+end
 
-  function buf:read(fmt)
-    checkArg(1, fmt, "number", "string", "nil")
-    fmt = fmt or "l"
-    if type(fmt) == "string" then
-      fmt = fmt:gsub("%*", "")
-    end
-    if fmt == "a" then
-      return self:readNum(math.huge)
-    elseif fmt == "l" then
-      local ln = ""
-      repeat
-        local c = self:readNum(1)
-        if c and c ~= "\n" then ln = ln .. c end
-      until c == "\n" or not c
-      return ln
-    elseif fmt == "L" then
-      local ln = ""
-      repeat
-        local c = self:readNum(1)
-        if c then ln = ln .. c end
-      until c == "\n" or not c
-      return ln
-    elseif type(fmt) == "number" then
-      return self:readNum(fmt)
-    else
-      error("bad argument #1: invalid format")
-    end
+-- this might be inefficient but it's still much better than raw file handles!
+function buffer:read_byte()
+  if self.bufsize == 0 then
+    return self.stream:read(1)
   end
-
-  function buf:write(...)
-    local args = table.pack(...)
-    for i=1, args.n, 1 do
-      checkArg(i, args[i], "string", "number")
-    end
-    local dat = table.concat(args)
-    self.wbuf = self.wbuf .. dat
-    if (#self.wbuf > self.bufsize) or self.tty then
-      local wrt = self.wbuf
-      self.wbuf = ""
-      self.stream:write(wrt)
-    end
-    return true
+  if #self.rbuf <= 0 then
+    self.rbuf = self.stream:read(self.bufsize) or ""
   end
+  local read = self.rbuf:sub(1,1)
+  --require("component").sandbox.log(self.bufsize, read, self.rbuf, #self.rbuf)
+  self.rbuf = self.rbuf:sub(2)
+  return read
+end
 
-  function buf:flush()
+function buffer:write_byte(byte)
+  checkArg(1, byte, "string")
+  byte = byte:sub(1,1)
+  if #self.wbuf >= self.bufsize then
     self.stream:write(self.wbuf)
     self.wbuf = ""
-    return true
   end
+  self.wbuf = self.wbuf .. byte
+end
 
-  function buf:close()
-    self:flush()
-    self.closed = true
-  end
-
-  function buf:readNum(n)
-    checkArg(1, n, "number")
-    if #self.rbuf < n then
-      local reqN = n ~= math.huge and n + math.min(0, self.bufsize - n) or n
-      repeat
-        local dat = self.stream:read(reqN)
-        if not dat then reqN = 0
-         else reqN = reqN - #dat
-              self.rbuf = self.rbuf .. dat
-        end
-      until reqN <= 0
+function buffer:read(fmt)
+  checkArg(1, fmt, "string", "number", "nil")
+  fmt = fmt or "l"
+  if type(fmt) == "number" then
+    local ret = ""
+    if self.bufsize == 0 then
+      ret = self.stream:read(fmt)
+    else
+      for i=1, fmt, 1 do
+        ret = ret .. (self:read_byte() or "")
+      end
     end
-    if n == math.huge then n = #self.rbuf end
-    local ret = self.rbuf:sub(1, n)
-    self.rbuf = self.rbuf:sub(n + 1)
-    return ret
+    return ret, self
+  else
+    fmt = fmt:gsub("%*", "")
+    fmt = fmt:sub(1,1)
+    -- TODO: support more formats
+    if fmt == "l" or fmt == "L" then
+      local ret = ""
+      repeat
+        local byte = self:read_byte()
+        if byte == "\n" then
+          ret = ret .. (fmt == "L" and byte or "")
+        else
+          ret = ret .. (byte or "")
+        end
+      until byte == "\n" or #byte == 0 or not byte
+      return ret, self
+    elseif fmt == "a" then
+      local ret, rf = "", function()return self:read_byte()end
+      if self.bufsize == 0 then
+        rf = function()return self.stream:read(math.huge)end
+      end
+      repeat
+        local chunk = rf()
+        ret = ret .. (chunk or "")
+      until #chunk == 0 or not chunk
+      return ret, self
+    else
+      error("bad argument #1 to 'read' (invalid format)")
+    end
   end
+end
 
-  kio.buffer = buf
+function buffer:lines(fmt)
+  return function()
+    return self:read(fmt)
+  end
+end
+
+function buffer:write(...)
+  local args = table.pack(...)
+  for i=1, args.n, 1 do
+    args[i] = tostring(args[i])
+  end
+  local write = table.concat(args)
+  if self.bufsize == 0 then
+    self.stream:write(write)
+  else
+    for byte in write:gmatch(".") do
+      self:write_byte(byte)
+    end
+  end
+  return self
+end
+
+function buffer:seek(whence, offset)
+  checkArg(1, whence, "string", "nil")
+  checkArg(2, offset, "number", "nil")
+  if whence then
+    self:flush()
+    return self.stream:seek(whence, offset)
+  end
+  if self.mode.r then
+    return self.stream:seek() + #self.rbuf
+  elseif self.mode.w or self.mode.a then
+    return self.stream:seek() + #self.wbuf
+  end
+  return 0, self
+end
+
+function buffer:flush()
+  if self.mode.w then
+    self.stream:write(self.wbuf)
+  end
+  return true, self
+end
+
+function buffer:setvbuf(mode)
+  if mode == "no" then
+    self.bufsize = 0
+  else
+    self.bufsize = 512
+  end
+end
+
+function buffer:close()
+  self:flush()
+  self.closed = true
+  return true
+end
+
+kio.buffer = buffer
 end
