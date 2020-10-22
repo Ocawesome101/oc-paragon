@@ -27,8 +27,8 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
-  built   = "2020/10/18",
-  builder = "ocawesome101@manjaro-pbp"
+  built   = "2020/10/22",
+  builder = "ocawesome101@archlinux"
 }
 
 -- kernel i/o
@@ -617,7 +617,12 @@ do
   
   function default:stat(file)
     return {
-      permissions = self:isReadOnly() and 292 or 438
+      permissions = self:isReadOnly() and 292 or 438,
+      isDirectory = self:isDirectory(file),
+      owner       = -1,
+      group       = -1,
+      lastModified= self:lastModified(file),
+      size        = self:size(file),
     }
   end
   
@@ -2951,15 +2956,24 @@ function vt.new(gpu, screen)
   -- 0: regular text
   -- 1: received '\27'
   -- 2: received '\27[', in escape
+  -- 3: received '\27(', in control
   local rb = ""
   local wb = ""
   local nb = ""
   local ec = true -- local echo
-  local lm = false -- line mode
+  local lm = true -- line mode
+  local raw = false -- raw read mode
+  local buf
   local cx, cy = 1, 1
   local fg, bg = colors[8], colors[1]
   local w, h = gpu.maxResolution()
   gpu.setResolution(w, h)
+
+  -- buffered TTYs for fullscreen apps, just like before but using control codes 
+  --       \27(B/\27(b rather than \27[*m escape sequences
+  if gpu.allocateBuffer then
+    buf = gpu.allocateBuffer()
+  end
 
   local function scroll(n)
     n = n or 1
@@ -2969,7 +2983,7 @@ function vt.new(gpu, screen)
 
   local function checkCursor()
     if cx > w then cx, cy = 1, cy + 1 end
-    if cy >= h then cy = h - 1 scroll(1) end
+    if cy >= h then cy = h - 1scroll(1) end
     if cx < 1 then cx = w cy = cy - 1 end
     if cy < 1 then cy = 1 end
   end
@@ -3007,7 +3021,14 @@ function vt.new(gpu, screen)
           cx, cy = 1, cy + 1
           checkCursor()
         elseif c == "\t" then
-          wb = wb .. (" "):rep(max(1, (cx + 4) % 8))
+          local t = cx + #wb
+          t = ((t-1) - ((t-1) % 8)) + 9
+          if t > w then
+            cx, cy = 1, cy + 1
+            checkCursor()
+          else
+            wb = wb .. (" "):rep(t - (cx + #wb))
+          end
         elseif c == "\27" then
           flushwb()
           mode = 1
@@ -3019,21 +3040,25 @@ function vt.new(gpu, screen)
       elseif mode == 1 then
         if c == "[" then
           mode = 2
+        elseif c == "(" then
+          mode = 3
         else
           mode = 0
         end
       elseif mode == 2 then
-        if c:match("[%d]") then
+        if tonumber(c) then
           nb = nb .. c
         elseif c == ";" then
-          if #nb > 0 then
-            p[#p+1] = tonumber(nb) or 0
-            nb = ""
-          end
+          --component.sandbox.log(nb, tonumber(nb), #p)
+          p[#p+1] = tonumber(nb) or 0
+          --component.sandbox.log(#p)
+          nb = ""
         else
           mode = 0
           if #nb > 0 then
-            p[#p+1] = tonumber(nb)
+            --component.sandbox.log(nb, tonumber(nb), #p)
+            p[#p+1] = tonumber(nb) or 0
+            --component.sandbox.log(#p)
             nb = ""
           end
           if c == "A" then
@@ -3049,9 +3074,14 @@ function vt.new(gpu, screen)
           elseif c == "F" then
             cx, cy = 1, cy - max(0, p[1] or 1)
           elseif c == "G" then
+            --component.sandbox.log("\\27[G", p[1])
+            --component.sandbox.log(cx)
             cx = min(w, max(p[1] or 1))
+            --component.sandbox.log(cx)
           elseif c == "H" or c == "f" then
-            cx, cy = min(w, max(0, p[2] or 1)), min(h, max(0, p[1] or 1))
+            --component.sandbox.log("\\27[H", 'x:', p[2], 'y:', p[1])
+            cx, cy = max(0, min(w, p[2] or 1)), max(0, min(h - 1, p[1] or 1))
+            --component.sandbox.log("\\27[H", cx, cy)
           elseif c == "J" then
             local n = p[1] or 0
             if n == 0 then
@@ -3144,10 +3174,6 @@ function vt.new(gpu, screen)
                   fg = bright[n - 89]
                 elseif n > 99 and n < 108 then -- bright background
                   bg = bright[n - 99]
-                elseif n == 108 then -- disable line mode
-                  lm = false
-                elseif n == 128 then -- enable line mode
-                  lm = true
                 end
                 gpu.setForeground(fg)
                 gpu.setBackground(bg)
@@ -3158,8 +3184,24 @@ function vt.new(gpu, screen)
               rb = rb .. string.format("\27[%d;%dR", cy, cx)
             end
           end
+          p = {}
         end
-        p = {}
+      elseif mode == 3 then
+        mode = 0
+        if c == "l" then
+          lm = false
+        elseif c == "L" then
+          lm = true
+        elseif c == "r" then
+          raw = false
+        elseif c == "R" then
+          raw = true
+        elseif c == "b" then
+          if buf then gpu.setActiveBuffer(0)
+                      gpu.bitblt(0, 1, 1, w, h, buf) end
+        elseif c == "B" then
+          if buf then gpu.setActiveBuffer(buf) end
+        end
       end
     end
     flushwb()
@@ -3186,27 +3228,22 @@ function vt.new(gpu, screen)
 
   local function key_down(sig, kb, char, code)
     if keyboards[kb] then
-      if char == 8 then
-        if #rb > 0 and rb:sub(-1) ~= "\n" then
-          rb = unicode.sub(rb, 1, -2)
-          stream:write("\8 \8")
-        end
-      elseif char == 13 then
-        stream:write("\n")
-        rb = rb .. "\n"
-      elseif char == 0 and code > 200 then
+      if char == 0 and code >= 200 then
         local add = ctrlHeld and "\27[1;5" or "\27["
         if code == keys.lcontrol or code == keys.rcontrol then
           ctrlHeld = true
           add = ""
+        end
+        if code == 211 then -- delete
+          add = add .. "3~"
         elseif code == 200 then -- up
           add = add .. "A"
         elseif code == 201 then -- page up
-          -- TODO: does this behave differently when ctrl is held?
+          -- TODO: do pgUp/pgDn behave differently when ctrl is held?
           add = "\27[5~"
         elseif code == 203 then -- left
           add = add .. "D"
-        elseif code == 205 then
+        elseif code == 205 then -- right
           add = add .. "C"
         elseif code == 208 then -- down
           add = add .. "B"
@@ -3215,10 +3252,26 @@ function vt.new(gpu, screen)
         end
         rb = rb .. add
         stream:write((add:gsub("\27", "^")))
-      elseif char ~= 0 then
-        local c = unicode.char(char)
-        stream:write(c)
-        rb = rb .. c
+      elseif raw then
+        if char ~= 0 then
+          local c = unicode.char(char == 13 and 10 or char)
+          rb = rb .. c
+          stream:write(c == "\8" and "\8 \8" or c)
+        end
+      else
+        if char == 8 then
+          if #rb > 0 and rb:sub(-1) ~= "\n" then
+            rb = unicode.sub(rb, 1, -2)
+            if ec then stream:write("\8 \8") end
+          end
+        elseif char == 13 then
+          stream:write("\n")
+          rb = rb .. "\n"
+        elseif char ~= 0 then
+          local c = unicode.char(char)
+          stream:write(c)
+          rb = rb .. c
+        end
       end
     end
   end
@@ -3234,6 +3287,21 @@ function vt.new(gpu, screen)
   local id1 = k.evt.register("key_down", key_down)
   local id2 = k.evt.register("key_up", key_up)
 
+  -- special character handling functions
+  local chars = {
+    ["\3"] = process.signals.SIGINT,
+    ["\4"] = process.signals.SIGHUP
+  }
+  local function checkBuffer()
+    for char, sign in pairs(chars) do
+      if rb:find(char) then
+        rb = ""
+        stream:write("\n")
+        k.sched.signal(k.sched.getinfo().pid, sign)
+      end
+    end
+  end
+
   -- simpler than the original stream:read implementation:
   --   -> required 'n' argument
   --   -> does not support 'n' as string
@@ -3242,13 +3310,16 @@ function vt.new(gpu, screen)
     checkArg(1, n, "number")
     if lm then
       while (not rb:find("\n")) or (rb:find("\n") < n) do
+        checkBuffer()
         coroutine.yield()
       end
     else
       while #rb < n do
+        checkBuffer()
         coroutine.yield()
       end
     end
+    checkBuffer()
     local ret = rb:sub(1, n)
     rb = rb:sub(n + 1)
     return ret

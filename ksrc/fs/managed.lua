@@ -22,7 +22,12 @@ do
   
   function default:stat(file)
     return {
-      permissions = self:isReadOnly() and 292 or 438
+      permissions = self:isReadOnly() and 292 or 438,
+      isDirectory = self:isDirectory(file),
+      owner       = -1,
+      group       = -1,
+      lastModified= self:lastModified(file),
+      size        = self:size(file),
     }
   end
   
