@@ -1,6 +1,8 @@
 # px: Paragon eXecutable
 
-The Paragon eXecutable is a signed executable format used in Paragon. It provides signatire validation and hashing.
+The Paragon eXecutable is a signed executable format used in Paragon.  It provides signatire validation and hashing.
+
+Note that support for `.px` files is completely unimplemented.  This file should be disregarded.
 
 ```
 +------------------------------------------------+

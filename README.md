@@ -19,4 +19,4 @@ To build Paragon, you will need `lua` 5.3 or newer\*, a VT100-compatible termina
 
 ## Documentation
 
-Documentation is available [here](https://oz-craft.pickardayune.com/paragon).
+Documentation is available in the `docs` folder of this repository.
