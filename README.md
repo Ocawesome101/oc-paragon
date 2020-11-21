@@ -1,5 +1,7 @@
 # Paragon
 
+*Paragon is to Monolith as GNU Hurd is to Linux.*
+
 Paragon is a UNIX-like kernel for the OpenComputers Minecraft mod.
 
 I decided to start developing Paragon alongside the Monolith distribution for a few reasons:
@@ -10,7 +12,11 @@ I decided to start developing Paragon alongside the Monolith distribution for a 
 
 ## Building
 
-To build Paragon, you will need `lua` 5.3 or newer\*, a VT100-compatible terminal, and a Unix-like shell. It may be easiest to build on Linux or MacOS. Run `lua build.lua` and follow the prompts.
+To build Paragon, you will need `lua` 5.3 or newer\*, a VT100-compatible terminal, and a Unix-like shell. It may be easiest to build on Linux or MacOS. Run `lua build.lua` and follow the prompts.  Passing `-d` will omit prompts and include everything.
 
 
 *\* Lua 5.0, 5.1, and 5.2 may work but are unsupported and untested.*
+
+## Documentation
+
+Documentation is available [here](https://oz-craft.pickardayune.com/paragon).
