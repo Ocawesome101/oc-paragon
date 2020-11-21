@@ -27,8 +27,8 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
-  built   = "2020/10/22",
-  builder = "ocawesome101@archlinux"
+  built   = "2020/11/20",
+  builder = "ocawesome101@manjaro-pbp"
 }
 
 -- kernel i/o
@@ -1241,16 +1241,30 @@ do
 
   s.kill = s.signal
 
+  local function getMinTimeout()
+    local max = math.huge
+    local upt = computer.uptime()
+    for pid, proc in pairs(procs) do
+      if not proc.stopped then -- don't use timeouts from stopped processes
+        if upt - proc.deadline < max then
+          max = upt - proc.deadline
+        end
+        if max <= 0 then
+          max = 0
+          break
+        end
+      end
+    end
+    return max
+  end
+
   function s.loop()
     s.loop = nil
     kio.dmesg(kio.loglevels.DEBUG, "starting scheduler loop")
     while #procs > 0 do
-      kio.dmesg(kio.loglevels.DEBUG, "sched: pullSignal")
+      local timeout = getMinTimeout()
       local sig = table.pack(computer.pullSignal(timeout))
-      kio.dmesg(kio.loglevels.DEBUG, "sched: gotsig")
-      kio.dmesg(kio.loglevels.DEBUG, tostring(sig[1]) .. " " .. tostring(sig[2]) .. " " .. tostring(sig[3]))
       local run = {}
-      kio.dmesg(kio.loglevels.DEBUG, "sched: run processes")
       for pid, proc in pairs(procs) do
         if not proc.stopped then
           run[#run + 1] = proc
