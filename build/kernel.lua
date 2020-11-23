@@ -27,8 +27,8 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
-  built   = "2020/11/21",
-  builder = "ocawesome101@manjaro-pbp"
+  built   = "2020/11/23",
+  builder = "ocawesome101@archlinux"
 }
 
 -- kernel i/o
