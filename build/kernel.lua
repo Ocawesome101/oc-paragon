@@ -27,7 +27,7 @@ end
 _G._KINFO = {
   name    = "Paragon",
   version = "0.1.0",
-  built   = "2020/11/20",
+  built   = "2020/11/21",
   builder = "ocawesome101@manjaro-pbp"
 }
 
@@ -616,6 +616,9 @@ do
   })
   
   function default:stat(file)
+    if not self.dev.exists(file) then
+      return nil, file .. ": file not found"
+    end
     return {
       permissions = self:isReadOnly() and 292 or 438,
       isDirectory = self:isDirectory(file),
@@ -935,9 +938,9 @@ do
     return (k.sched.getinfo() or {}).owner or 0
   end
 
-  -- users.getuid(name:string): number or nil, string
+  -- users.idByName(name:string): number or nil, string
   --   Returns the UID associated with the provided name.
-  function users.getuid(name)
+  function users.idByName(name)
     checkArg(1, name, "string")
     for uid, dat in pairs(upasswd) do
       if dat.name == name then
@@ -947,14 +950,21 @@ do
     return nil, msgs[1]
   end
 
-  -- users.getname(uid:number): string or nil, string
+  -- users.userByID(uid:number): string or nil, string
   --   Returns the username associated with the provided UID.
-  function users.getname(uid)
+  function users.userByID(uid)
     checkArg(1, uid, "number")
+    if uid == -1 then
+      return "all"
+    end
     if not upasswd[uid] then
       return nil, msgs[1]
     end
     return upasswd[uid].name
+  end
+
+  function users.groupByID()
+    return "none"
   end
 
   k.security.users = users

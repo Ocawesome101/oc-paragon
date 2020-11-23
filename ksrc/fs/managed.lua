@@ -21,6 +21,9 @@ do
   })
   
   function default:stat(file)
+    if not self.dev.exists(file) then
+      return nil, file .. ": file not found"
+    end
     return {
       permissions = self:isReadOnly() and 292 or 438,
       isDirectory = self:isDirectory(file),
