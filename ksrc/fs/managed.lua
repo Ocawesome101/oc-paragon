@@ -25,7 +25,7 @@ do
       return nil, file .. ": file not found"
     end
     return {
-      permissions = self:isReadOnly() and 292 or 438,
+      permissions = self:isReadOnly() and 365 or 511,
       isDirectory = self:isDirectory(file),
       owner       = -1,
       group       = -1,
