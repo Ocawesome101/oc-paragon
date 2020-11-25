@@ -40,6 +40,9 @@ function buffer:read_byte()
   local read = self.rbuf:sub(1,1)
   --require("component").sandbox.log(self.bufsize, read, self.rbuf, #self.rbuf)
   self.rbuf = self.rbuf:sub(2)
+  if read == "" or not read then
+    return nil
+  end
   return read
 end
 
@@ -62,7 +65,11 @@ function buffer:read(fmt)
       ret = self.stream:read(fmt)
     else
       for i=1, fmt, 1 do
-        ret = ret .. (self:read_byte() or "")
+        local char = self:read_byte()
+        ret = ret .. (char or "")
+      end
+      if ret == "" then
+        return nil
       end
     end
     return ret, self
@@ -89,7 +96,7 @@ function buffer:read(fmt)
       repeat
         local chunk = rf()
         ret = ret .. (chunk or "")
-      until #chunk == 0 or not chunk
+      until (not chunk) or #chunk == 0
       return ret, self
     else
       error("bad argument #1 to 'read' (invalid format)")
