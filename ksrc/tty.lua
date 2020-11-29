@@ -373,9 +373,8 @@ function vt.new(gpu, screen)
         if code == keys.lcontrol or code == keys.rcontrol then
           ctrlHeld = true
           add = ""
-        end
-        if code == 211 then -- delete
-          add = add .. "3~"
+        elseif code == 211 then -- delete
+          add = "\127"
         elseif code == 200 then -- up
           add = add .. "A"
         elseif code == 201 then -- page up
