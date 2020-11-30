@@ -51,12 +51,28 @@ do
     data = data .. (chunk or "")
   until not chunk
   ifs:close(handle)
+  -- partition table driver cache for better memory usage
+  local dcache = {}
   for line in data:gmatch("[^\n]+") do
     -- e.g. to specify the third partition on the OCGPT of a drive:
     -- ocgpt(42d7,3)   /   openfs   rw
     -- managed(5732,1)   /   managed   rw
-    local pspec, fsspec, path, mode = line:match("(.-)%s+(.-)%s+(.-)%s+(.-)")
-    local ptab, addr, a
+    local pspec, path, fsspec, mode = line:match("(.-)%s+(.-)%s+(.-)%s+(.-)")
+    local ptab, caddr, pnum = pspec:match("(%w+)%(([%w%-]+),(%d+)%)")
+    if not k.drv.fs[ptab] then
+      kio.dmesg(kio.loglevels.ERROR, ptab..": missing ptable driver")
+    elseif ptab == "managed" or component.type(caddr) == "filesystem" then
+      if not (ptab == "managed" and component.type(caddr) == "filesystem") then
+        kio.dmesg(kio.loglevels.ERROR, "cannot use managed pspec on drive component")
+      end
+    else
+      dcache[caddr] = dcache[addr] or k.drv.fs[ptab].new(caddr)
+      local drv = dcache[addr]
+      if fsspec ~= "managed" then
+        drv = k.drv.fs[fsspec].new(drv:partition(tonumber(pnum)))
+      end
+      vfs.mount(drv, path)
+    end
   end
   ::eol::
 end

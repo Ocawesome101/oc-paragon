@@ -112,7 +112,7 @@ do
     -- raw component restrictions
     sb.component = setmetatable({}, {__index = function(_,m)
       if k.security.users.user() ~= 0 then
-        error(select(2, kio.error("PERMISSION_DENIED")))
+        error(string.format("component.%s: permission denied", m))
       end
       return component[m]
     end, __metatable = {}})
