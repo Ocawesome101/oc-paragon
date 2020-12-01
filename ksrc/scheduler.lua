@@ -112,6 +112,12 @@ do
         if proc.dead then
           kio.dmesg("process died: " .. proc.pid)
           computer.pushSignal("process_died", proc.pid, proc.name)
+          for k,v in pairs(proc.handles) do
+            pcall(v.close, v)
+          end
+          pcall(proc.io.stdin.close, proc.io.stdin)
+          pcall(proc.io.stdout.close, proc.io.stdout)
+          pcall(proc.io.stderr.close, proc.io.stderr)
           procs[proc.pid] = nil
         end
       end

@@ -119,6 +119,7 @@ do
   function process:info()
     return {
       io = self.io,
+      pid = self.pid,
       env = self.env,
       name = self.name,
       owner = self.owner,
