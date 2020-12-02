@@ -488,6 +488,7 @@ function vt.new(gpu, screen)
 
   local new = kio.buffer.new(stream, "rw")
   new:setvbuf("no")
+  new.bufferSize = 0
   new.tty = true
   return new
 end
