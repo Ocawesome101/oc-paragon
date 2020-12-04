@@ -19,6 +19,7 @@ do
     local p = procs[current]
     local new = process.new {
       pid = last,
+      name = name,
       parent = current,
       priority = priority or math.huge,
       env = p and table.copy(p.env) or {},
@@ -135,6 +136,15 @@ do
     k.sb.process = {}
     function k.sb.process.spawn(a,b,c)
       return k.sched.spawn(a,b,c).pid
+    end
+    
+    -- userspace may want a list of all PIDs
+    function k.sb.process.list()
+      local ret = {}
+      for pid, proc in pairs(procs) do
+        ret[#ret + 1] = pid
+      end
+      return ret
     end
 
     -- we can safely return only a very limited subset of process info

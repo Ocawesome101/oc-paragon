@@ -106,8 +106,9 @@ do
   gpu = (gpu and component.type(gpu) == "gpu" and gpu) or component.list("gpu")()
   screen = (screen and component.type(screen) == "screen" and screen) or component.list("screen")()
   gpu = component.proxy(gpu)
+  gpu.bind(screen)
   local y = 0
-  local w, h = gpu.maxResolution()
+  local w, h = assert(gpu.maxResolution())
   gpu.setResolution(w, h)
   gpu.fill(1, 1, w, h, " ")
   gpu.setForeground(0xaaaaaa)

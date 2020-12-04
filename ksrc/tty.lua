@@ -132,10 +132,8 @@ function vt.new(gpu, screen)
     while unicode.len(wb) > 0 do
       checkCursor()
       local ln = unicode.sub(wb, 1, w - cx + 1)
-      if ec then
-        gpu.set(cx, cy, ln)
-        cx = cx + unicode.len(ln)
-      end
+      gpu.set(cx, cy, ln)
+      cx = cx + unicode.len(ln)
       wb = unicode.sub(wb, unicode.len(ln) + 1)
     end
   end
@@ -390,13 +388,19 @@ function vt.new(gpu, screen)
           add = add .. "6~"
         end
         rb = rb .. add
-        stream:write((add:gsub("\27", "^")))
+        if ec then stream:write((add:gsub("\27", "^"))) end
       elseif raw then
         if char ~= 0 then
-          local c = (char > 255 and unicode.char or string.char)(char == 13 and
-                     10 or char)
+          local c
+          if ctrlHeld and (char > 31 and char < 127) then
+            c = string.char(char - 96)
+          elseif char == 8 then
+            c = string.char(127)
+          else
+            c = (char > 255 and unicode.char or string.char)(char)
+          end
           rb = rb .. c
-          stream:write(c == "\8" and "\8 \8" or c)
+          if ec then stream:write(c == "\8" and "\8 \8" or c) end
         end
       else
         if char == 8 then
@@ -405,11 +409,11 @@ function vt.new(gpu, screen)
             if ec then stream:write("\8 \8") end
           end
         elseif char == 13 then
-          stream:write("\n")
+          if ec then stream:write("\n") end
           rb = rb .. "\n"
         elseif char ~= 0 then
           local c = unicode.char(char)
-          stream:write(c)
+          if ec then stream:write(c) end
           rb = rb .. c
         end
       end

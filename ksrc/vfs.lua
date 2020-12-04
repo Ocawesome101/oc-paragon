@@ -69,6 +69,10 @@ do
     if mnt[path] then
       return nil, "there is already a filesystem mounted there"
     end
+    if path ~= "/" then
+      local node, spath = vfs.resolve(path)
+      node:makeDirectory(spath)
+    end
     mnt[path] = prx
     return true
   end

@@ -35,6 +35,7 @@ if not kargs.keep_initfs then
 end
 
 -- load and parse the fstab
+kio.dmesg("parsing /etc/fstab")
 do
   local ifs, p = vfs.resolve("/etc/fstab")
   if not ifs then
@@ -53,10 +54,12 @@ do
   ifs:close(handle)
   -- partition table driver cache for better memory usage
   local dcache = {}
+  vfs.umount("/")
   for line in data:gmatch("[^\n]+") do
     -- e.g. to specify the third partition on the OCGPT of a drive:
     -- ocgpt(42d7,3)   /   openfs   rw
     -- managed(5732,1)   /   managed   rw
+    kio.dmesg(line)
     local pspec, path, fsspec, mode = line:match("(.-)%s+(.-)%s+(.-)%s+(.-)")
     local ptab, caddr, pnum = pspec:match("(%w+)%(([%w%-]+),(%d+)%)")
     if not k.drv.fs[ptab] then
@@ -64,13 +67,18 @@ do
     elseif ptab == "managed" or component.type(caddr) == "filesystem" then
       if not (ptab == "managed" and component.type(caddr) == "filesystem") then
         kio.dmesg(kio.loglevels.ERROR, "cannot use managed pspec on drive component")
+      else
+        local drv = k.drv.fs.managed.create(caddr)
+        kio.dmesg("mounting " .. caddr .. " at " .. path)
+        vfs.mount(drv, path)
       end
     else
-      dcache[caddr] = dcache[addr] or k.drv.fs[ptab].new(caddr)
+      dcache[caddr] = dcache[addr] or k.drv.fs[ptab].create(caddr)
       local drv = dcache[addr]
       if fsspec ~= "managed" then
-        drv = k.drv.fs[fsspec].new(drv:partition(tonumber(pnum)))
+        drv = k.drv.fs[fsspec].create(drv:partition(tonumber(pnum)))
       end
+      kio.dmesg("mounting " .. pspec .. " at " .. path)
       vfs.mount(drv, path)
     end
   end
