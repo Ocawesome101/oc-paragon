@@ -64,20 +64,20 @@ do
 
   function io.input(file)
     local info = k.sched.getinfo()
-    return info:stdin(file)
+    return info:input(file)
   end
 
   function io.output(file)
     local info = k.sched.getinfo()
-    return info:stdout(file)
+    return info:output(file)
   end
 
   function io.read(...)
-    return io.stdin:read(...)
+    return io.input():read(...)
   end
 
   function io.write(...)
-    return io.stdout:write(...)
+    return io.output():write(...)
   end
 
   k.hooks.add("sandbox", function()
@@ -86,7 +86,7 @@ do
       for i=1, args.n, 1 do
         args[i] = tostring(args[i])
       end
-      io.write(table.concat(args, "\t") .. "\n")
+      io.stdout:write(table.concat(args, "\t") .. "\n")
       return true
     end
   end)

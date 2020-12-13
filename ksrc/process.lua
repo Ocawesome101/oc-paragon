@@ -63,6 +63,11 @@ do
         stderr = try_get(args, "stderr")  -- standard error
       }
     }
+
+    new.io.input = new.io.stdin
+    new.io.output = new.io.stdout
+    new.env.USER = new.env.USER or "root"
+    new.env.UID = new.env.UID or 0
   
     for k,v in pairs(args) do new[k] = v end
     return setmetatable(new, {__index = process})
@@ -130,7 +135,9 @@ do
       sighandlers = self.sighandlers,
       stdin = process.stdin, -- convenience
       stdout = process.stdout,
-      stderr = process.stderr
+      stderr = process.stderr,
+      input = process.input,
+      output = process.output
     }
   end
 
@@ -157,26 +164,26 @@ do
   --   See `process:handle`.
   process.kill = process.handle
 
-  -- process:stdin([file:table]): table
-  --   If `file` is provided and is valid, set the process's standard input to `file`. Always returns the current standard input.
-  function process:stdin(file)
+  -- process:input([file:table]): table
+  --   If `file` is provided and is valid, set the process's io.input to `file`. Always returns the current standard input.
+  function process:input(file)
     checkArg(1, file, "table", "nil")
     if file and file.read and file.write and file.close then
-      pcall(self.io.stdin.close, self.io.stdin)
-      self.io.stdin = file
+      pcall(self.io.input.close, self.io.input)
+      self.io.input = file
     end
-    return self.io.stdin
+    return self.io.input
   end
 
-  -- process:stdout([file:table]): table
-  --   Like `process:stdin()`, but operates on the standard output.
-  function process:stdout(file)
+  -- process:output([file:table]): table
+  --   Like `process:stdin()`, but operates on the output.
+  function process:output(file)
     checkArg(1, file, "table", "nil")
     if file and file.read and file.write and file.close then
-      pcall(self.io.stdout.close, self.io.stdout)
-      self.io.stdout = file
+      pcall(self.io.output.close, self.io.output)
+      self.io.output = file
     end
-    return self.io.stdout
+    return self.io.output
   end
 
   -- process:stderr([file:table]): table
@@ -188,5 +195,13 @@ do
       self.io.stderr = file
     end
     return self.io.stderr
+  end
+
+  function process:stdin()
+    return self.io.stdin
+  end
+
+  function process:stdout()
+    return self.io.stdout
   end
 end

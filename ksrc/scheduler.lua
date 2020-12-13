@@ -11,7 +11,7 @@ do
 
   -- k.sched.spawn(func:function, name:string[, priority:number]): table
   --   Spawns a process, adding `func` to its threads.
-  function s.spawn(func, name, priority, INTERNAL_UNDOCUMENTED_ARGUMENT)
+  function s.spawn(func, name, priority, iua)
     checkArg(1, func, "function")
     checkArg(2, name, "string")
     checkArg(3, priority, "number", "nil")
@@ -23,11 +23,13 @@ do
       parent = current,
       priority = priority or math.huge,
       env = p and table.copy(p.env) or {},
-      stdin = p and p.io.stdin or {},
-      stdout = p and p.io.stdout or {},
+      stdin = p and p.io.input or {},
+      stdout = p and p.io.output or {},
       stderr = p and p.io.stderr or {},
-      owner = INTERNAL_UNDOCUMENTED_ARGUMENT
+      owner = iua
     }
+    new.env.UID = new.owner
+    new.env.USER = k.security.users.userByID(new.owner)
     new:addThread(func)
     procs[new.pid] = new
     return new -- the userspace function will just return the PID
