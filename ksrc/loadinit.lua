@@ -11,7 +11,7 @@ do
   if not ok then
     kio.panic(err)
   end
-  k.sched.spawn(ok, "[init]", 1)
+  k.sched.spawn(function()ok(k)end, "[init]", 1)
 end
 
 k.sched.loop()
