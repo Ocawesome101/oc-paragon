@@ -84,3 +84,25 @@ do
   end
   ::eol::
 end
+
+-- FINALLY proper system logging
+do
+  -- comment this out for debugging purposes
+  goto no_log
+  local LOG_PATH = "/boot/syslog"
+  local logHandle = assert(io.open(LOG_PATH, "w"))
+  
+  kio.dmesg("bringing up proper system logging")
+
+  function kio.__dmesg:write(msg)
+    logHandle:write(msg, "\n")
+    logHandle:flush()
+  end
+
+  for i=1, #kio.__dmesg.buffer, 1 do
+    kio.__dmesg:write(kio.__dmesg.buffer[i])
+  end
+  kio.__dmesg.buffer = nil
+end
+
+::no_log::

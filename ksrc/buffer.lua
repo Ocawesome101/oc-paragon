@@ -4,8 +4,6 @@ kio.dmesg(kio.loglevels.INFO, "ksrc/buffer.lua")
 
 do
 
--- Subtly broken.
-
 local buffer = {}
 
 function buffer.new(stream, mode)
@@ -146,6 +144,7 @@ end
 function buffer:flush()
   if self.mode.w then
     self.stream:write(self.wbuf)
+    self.wbuf = ""
   end
   return true, self
 end
@@ -160,6 +159,7 @@ end
 
 function buffer:close()
   self:flush()
+  self.stream:close()
   self.closed = true
   return true
 end

@@ -19,6 +19,18 @@ do
         return info:stderr()
       end
     end,
+    __newindex = function(self, key, value)
+      local info = k.sched.getinfo()
+      if key == "stdin" then
+        info.io.stdin = value
+      elseif key == "stdout" then
+        info.io.stdout = value
+      elseif key == "stderr" then
+        info.io.stderr = value
+      else
+        rawset(self, key, value)
+      end
+    end,
     __metatable = {}
   }
   k.iomt = iomt
@@ -62,14 +74,22 @@ do
     return kio.buffer.new(stream, mode)
   end
 
+  local function open(f, m)
+    if type(f) == "string" then
+      return io.open(f, m)
+    else
+      return f
+    end
+  end
+
   function io.input(file)
     local info = k.sched.getinfo()
-    return info:input(file)
+    return info:input(open(file, "r"))
   end
 
   function io.output(file)
     local info = k.sched.getinfo()
-    return info:output(file)
+    return info:output(open(file, "w"))
   end
 
   function io.read(...)

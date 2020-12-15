@@ -169,7 +169,7 @@ do
   function process:input(file)
     checkArg(1, file, "table", "nil")
     if file and file.read and file.write and file.close then
-      pcall(self.io.input.close, self.io.input)
+      if not self.io.input.tty then pcall(self.io.input.close, self.io.input) end
       self.io.input = file
     end
     return self.io.input
@@ -180,7 +180,7 @@ do
   function process:output(file)
     checkArg(1, file, "table", "nil")
     if file and file.read and file.write and file.close then
-      pcall(self.io.output.close, self.io.output)
+      if not self.io.output.tty then pcall(self.io.output.close, self.io.output) end
       self.io.output = file
     end
     return self.io.output
@@ -191,7 +191,7 @@ do
   function process:stderr(file)
     checkArg(1, file, "table", "nil")
     if file and file.read and file.write and file.close then
-      pcall(self.io.stderr.close, self.io.stderr)
+      if not io.stderr.tty then pcall(self.io.stderr.close, self.io.stderr) end
       self.io.stderr = file
     end
     return self.io.stderr

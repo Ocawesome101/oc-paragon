@@ -45,7 +45,7 @@ function _pipe:read(n)
   if type(n) == "string" then n = n:gsub("%*", "") end
   if self.closed and #self.buf == 0 then return nil end
   if n == "l" then
-    while not self.buf:find("\n") and self.strict do
+    while (not self.buf:find("\n")) and self.strict do
       coroutine.yield()
     end
     local s = self.buf:find("\n") or #self.buf
@@ -58,7 +58,6 @@ function _pipe:read(n)
     return ret
   end
   while #self.buf < n and self.strict do
-    kio.dmesg("PIPEYIELD")
     coroutine.yield()
   end
   n = math.min(n, #self.buf)
@@ -69,11 +68,16 @@ end
 
 -- _pipe:write(data:string): boolean or nil, string
 --   Write `data` to the pipe stream.
-function _pipe:write(data)
+function _pipe:write(...)
+  local args = table.pack(...)
+  for i=1, args.n, 1 do
+    args[i] = tostring(args[i])
+  end
+  local write = table.concat(args)
   if self.closed then
     return kio.error("BROKEN_PIPE")
   end
-  self.buf = self.buf .. data
+  self.buf = self.buf .. write
   return true
 end
 
@@ -89,14 +93,22 @@ function _pipe:close()
   self.closed = true
 end
 
+-- _pipe:lines(fmt:string): function
+--   Iterate over all lines in the pipe data.
+function _pipe:lines(fmt)
+  return function()
+    return self:read(fmt or "l")
+  end
+end
+
 -- kio.pipe(): table
 --   Create a pipe.
 function kio.pipe()
-  return setmetatable({buf = ""}, {__index = _pipe})
+  return setmetatable({buf = "", strict = true}, {__index = _pipe}), "rw"
 end
 
 -- temporary log buffer until we get a root filesystem
---local dmesg = {}
+kio.__dmesg = {buffer={}}
 
 local console
 do
@@ -113,7 +125,7 @@ do
   gpu.fill(1, 1, w, h, " ")
   gpu.setForeground(0xaaaaaa)
   gpu.setBackground(0x000000)
-  console = function(msg)
+  local _console = function(msg)
     if y == h then
       gpu.copy(1, 1, w, h, 0, -1)
       gpu.fill(1, h, w, 1, " ")
@@ -123,8 +135,16 @@ do
     gpu.set(1, y, msg)
   end
 
+  function kio.__dmesg:write(msg)
+    table.insert(self.buffer, msg)
+  end
+
   kio.gpu = gpu
-  kio.console = console
+  kio.console = function(...)
+    kio.__console(...)
+    return kio.__dmesg:write(...)
+  end
+  kio.__console = _console
 end
 
 -- kio.error(err:string): nil, string
@@ -142,6 +162,8 @@ function kio.dmesg(level, msg)
     local mesg = string.format("[%5.05f] [%s] %s", computer.uptime(), kio.levels[level], line)
     if level >= kargs.loglevel then
       kio.console(mesg)
+    else
+      kio.__dmesg:write(mesg)
     end
 --    table.insert(dmesg, mesg)
   end
