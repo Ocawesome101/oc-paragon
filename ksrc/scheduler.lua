@@ -178,5 +178,32 @@ do
     function k.sb.process.thread(func, name)
       return k.sched.newthread(func, name)
     end
+
+    -- some of the userspace `os' api, specifically the process-centric stuff
+    function k.sb.os.getenv(k)
+      checkArg(1, k, "string", "number")
+      return k.sb.process.info().env[k]
+    end
+
+    function k.sb.os.setenv(k, v)
+      checkArg(1, k, "string", "number")
+      checkArg(2, v, "string", "number", "nil")
+      k.sb.process.info().env[k] = v
+      return true
+    end
+
+    function k.sb.os.exit()
+      k.sb.process.signal(process.current(), k.sb.process.signals.SIGKILL)
+      coroutine.yield()
+    end
+
+    function os.sleep(n)
+      checkArg(1, n, "number")
+      local max = computer.uptime() + n
+      repeat
+        coroutine.yield()
+      until computer.uptime() >= max
+      return true
+    end
   end)
 end

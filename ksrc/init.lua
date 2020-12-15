@@ -27,6 +27,7 @@
 ---#include "ksrc/thread.lua"
 --#include "ksrc/hostname.lua"
 --#include "ksrc/io.lua"
+--#include "ksrc/fsapi.lua"
 --#include "ktmp/exec.lua"
 --#include "ktmp/misc.lua"
 --#include "ksrc/iramfs.lua"

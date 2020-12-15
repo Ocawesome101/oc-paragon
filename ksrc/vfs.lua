@@ -11,11 +11,10 @@ do
      1. use vfs.resolve to resolve a filepath to a proxy and a path on the proxy
      2. operate on the proxy
      the vfs api does not provide all available filesystem functions; see
-     'misc/fsapi.lua' for an api that does.
+     'src/fsapi.lua' for an api that does.
      note that while running a kernel without the fsapi module, you'll need to
-     either assign it as an initrd module or set 'security.uspace_vfs=1' in the
-     kernel command line to allow userspace to access the vfs api (not
-     recommended!). ]]
+     assign it as an initrd module for most of the system to function.  As such,
+     fsapi is included by default. ]]
 
   local function segments(path)
     local segs = {}
