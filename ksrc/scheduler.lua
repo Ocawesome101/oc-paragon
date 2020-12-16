@@ -130,8 +130,10 @@ do
 
   k.hooks.add("sandbox", function()
     -- userspace process api
+    local signals = process.signals
     local process = {}
     k.sb.process = process
+    k.sb.process.signals = signals
     function k.sb.process.spawn(a,b,c)
       return k.sched.spawn(a,b,c).pid
     end
@@ -172,7 +174,6 @@ do
     function k.sb.process.signal(pid, sig)
       return k.sched.signal(pid, sig)
     end
-    k.sb.process.signals = process.signals
 
     function k.sb.process.thread(func, name)
       return k.sched.newthread(func, name)

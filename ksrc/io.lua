@@ -100,6 +100,13 @@ do
     return io.output():write(...)
   end
 
+  function io.lines(file, ...)
+    if not file then
+      return io.input():lines(...)
+    end
+    return io.open(file, "r"):lines(...)
+  end
+
   k.hooks.add("sandbox", function()
     function k.sb.print(...)
       local args = table.pack(...)

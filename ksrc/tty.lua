@@ -148,9 +148,9 @@ function vt.new(gpu, screen)
       return nil, "input/output error"
     end
     str = str:gsub("\8", "\27[D")
-    local _c = gpu.get(cx, cy)
-    gpu.setForeground(fg)
-    gpu.setBackground(bg)
+    local _c, _f, _b = gpu.get(cx, cy)
+    gpu.setForeground(_b)
+    gpu.setBackground(_f)
     gpu.set(cx, cy, _c)
     for c in str:gmatch(".") do
       if mode == 0 then
@@ -307,7 +307,7 @@ function vt.new(gpu, screen)
                 elseif n == 39 then -- default foreground
                   fg = colors[8]
                 elseif n == 49 then -- default background
-                bg = colors[1]
+                  bg = colors[1]
                 elseif n > 89 and n < 98 then -- bright foreground
                   fg = bright[n - 89]
                 elseif n > 99 and n < 108 then -- bright background
