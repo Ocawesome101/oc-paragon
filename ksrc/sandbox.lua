@@ -5,8 +5,7 @@ kio.dmesg("ksrc/sandbox.lua")
 --#include "ksrc/loadfile.lua"
 
 do
-  local sb = {}
-  sb = table.copy(_G)
+  local sb = table.copy(_G)
   sb._G = sb
   k.sb = sb
   local iomt = k.iomt

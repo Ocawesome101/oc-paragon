@@ -84,6 +84,9 @@ do
         kio.dmesg(kio.loglevels.DEBUG, "process " .. self.pid .. ": thread died: " .. i)
         self.threads[i] = nil
         if ec then kio.dmesg(tostring(ec)) end
+        if self.pid == 1 then -- we are init, PANIC!!!
+          kio.panic(tostring(ec))
+        end
         computer.pushSignal("thread_died", self.pid, (type(ec) == "string" and 1 or ec), type(ec) == "string" and ec)
       end
       -- TODO: this may result in incorrect yield timeouts with multiple threads

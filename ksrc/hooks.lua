@@ -6,14 +6,14 @@ do
   function hooks.add(k, v)
     checkArg(1, k, "string")
     checkArg(2, v, "function")
-    hooks[k] = hooks[k] or setmetatable({}, {__call = function(self, ...) for k, v in pairs(self) do pcall(v, ...) end end})
+    hooks[k] = hooks[k] or setmetatable({}, {__call = function(self, ...) for k, v in ipairs(self) do v(...) end end})
     table.insert(hooks[k], v)
     return true
   end
   function hooks.call(k, ...)
     checkArg(1, k, "string")
     if hooks[k] then
-      for k,v in pairs(hooks[k]) do
+      for k, v in ipairs(hooks[k]) do
         pcall(v, ...)
       end
     end

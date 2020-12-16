@@ -27,10 +27,10 @@ do
 
   -- snadbox hook for protecting certain sensitive APIs
   k.hooks.add("sandbox", function()
-    k.sb.k.sha3 = protect(k.sb.k.sha3)
-    k.sb.k.sha2 = protect(k.sb.k.sha2)
-    k.sb.k.ec25519 = protect(k.sb.k.ec25519)
-    k.sb.k.security.users = protect(k.sb.k.security.users)
-    k.sb.k.security = protect(k.sb.k.security)
+    k.sb.sha3 = protect(k.sb.k.sha3)
+    k.sb.sha2 = protect(k.sb.k.sha2)
+    k.sb.ec25519 = protect(k.sb.k.ec25519)
+    k.sb.security = protect(k.sb.k.security)
+    old_rawset(k.sb.security, "users", protect(k.sb.k.security.users))
   end)
 end

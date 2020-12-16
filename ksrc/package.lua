@@ -1,8 +1,8 @@
 -- package library --
 
-kio.dmesg("ksrc/package.lua")
 
 k.hooks.add("sandbox", function()
+  kio.dmesg("ksrc/package.lua")
   local package = {}
   k.sb.package = package
   local loading = {}
@@ -10,19 +10,36 @@ k.hooks.add("sandbox", function()
     _G = k.sb,
     os = k.sb.os,
     io = k.sb.io,
+    sha2 = k.sb.sha2,
+    sha3 = k.sb.sha3,
     math = k.sb.math,
+    pipe = {create = k.io.pipe},
+    event = table.copy(k.evt),
     table = k.sb.table,
+    users = k.sb.security.users,
     bit32 = k.sb.bit32,
+    vt100 = table.copy(k.vt),
     string = k.sb.string,
+    buffer = table.copy(k.io.buffer),
     package = k.sb.package,
     process = k.sb.process,
+    ec25519 = k.sb.ec25519,
+    security = k.sb.security,
+    hostname = table.copy(k.hostname),
     computer = k.sb.computer,
     component = k.sb.component,
     coroutine = k.sb.coroutine,
     filesystem = k.sb.fs
   }
+  k.sb.k = nil
   k.sb.fs = nil
+  k.sb.vfs = nil
+  k.sb.sha2 = nil
+  k.sb.sha3 = nil
+  k.sb.bit32 = nil
   k.sb.process = nil
+  k.sb.ec25519 = nil
+  k.sb.security = nil
   k.sb.computer = nil
   k.sb.component = nil
   package.loaded = loaded
@@ -40,7 +57,7 @@ k.hooks.add("sandbox", function()
     name = name:gsub(sep, rep)
     for search in path:gmatch("[^;]+") do
       search = search:gsub("%?", name)
-      if k.vfs.stat(search) then
+      if vfs.stat(search) then
         return search
       end
       searched[#searched + 1] = search
@@ -53,7 +70,7 @@ k.hooks.add("sandbox", function()
       __index = function(tbl, key)
         setmetatable(lib, nil)
         setmetatable(lib.internal or {}, nil)
-        dofile(file)
+        k.sb.dofile(file)
         return tbl[key]
       end
     }
@@ -63,6 +80,7 @@ k.hooks.add("sandbox", function()
     setmetatable(lib, mt)
   end
 
+  kio.dmesg(kio.loglevels.PANIC, "add: require")
   function k.sb.require(module)
     checkArg(1, module, "string")
     if loaded[module] ~= nil then

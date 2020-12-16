@@ -5,7 +5,7 @@ kio.dmesg("src/fsapi.lua")
 do
   -- for now, we'll just only provide userspace with this one
   k.hooks.add("sandbox", function()
-    local vfs = k.sb.vfs
+    local vfs = vfs
     local fs = {}
 
     fs.stat = vfs.stat

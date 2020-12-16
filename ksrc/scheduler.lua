@@ -6,8 +6,6 @@ do
   local procs = {}
   local s = {}
   local last, current = 0, 0
-  -- TODO: proper process timeouts
-  local timeout = tonumber(kargs["scheduler.timeout"]) or 0.5
 
   -- k.sched.spawn(func:function, name:string[, priority:number]): table
   --   Spawns a process, adding `func` to its threads.
@@ -113,7 +111,7 @@ do
         current = proc.pid
         proc:resume(table.unpack(sig))
         if proc.dead then
-          kio.dmesg("process died: " .. proc.pid)
+          kio.dmesg(kio.loglevels.DEBUG, "process died: " .. proc.pid)
           computer.pushSignal("process_died", proc.pid, proc.name)
           for k,v in pairs(proc.handles) do
             pcall(v.close, v)
@@ -132,7 +130,8 @@ do
 
   k.hooks.add("sandbox", function()
     -- userspace process api
-    k.sb.process = {}
+    local process = {}
+    k.sb.process = process
     function k.sb.process.spawn(a,b,c)
       return k.sched.spawn(a,b,c).pid
     end
@@ -182,22 +181,22 @@ do
     -- some of the userspace `os' api, specifically the process-centric stuff
     function k.sb.os.getenv(k)
       checkArg(1, k, "string", "number")
-      return k.sb.process.info().env[k]
+      return process.info().env[k]
     end
 
     function k.sb.os.setenv(k, v)
       checkArg(1, k, "string", "number")
       checkArg(2, v, "string", "number", "nil")
-      k.sb.process.info().env[k] = v
+      process.info().env[k] = v
       return true
     end
 
     function k.sb.os.exit()
-      k.sb.process.signal(process.current(), k.sb.process.signals.SIGKILL)
+      process.signal(process.current(), process.signals.SIGKILL)
       coroutine.yield()
     end
 
-    function os.sleep(n)
+    function k.sb.os.sleep(n)
       checkArg(1, n, "number")
       local max = computer.uptime() + n
       repeat

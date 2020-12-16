@@ -187,6 +187,7 @@ do
       traceback = traceback .. string.format("\n  %s:%s: in %s'%s':", info.source:gsub("=*",""), info.currentline or "C", (info.namewhat ~= "" and info.namewhat .. " ") or "", info.name or "?")
       i = i + 1
     end
+    traceback = traceback:gsub("\t", "  ")
     for line in traceback:gmatch("[^\n]+") do
       kio.dmesg(kio.loglevels.PANIC, line)
     end

@@ -9,9 +9,7 @@ do
 
   function computer.pullSignal(timeout)
     checkArg(1, timeout, "number", "nil")
---    kio.dmesg(kio.loglevels.DEBUG, "evt: ps")
     local sig = table.pack(ps(timeout))
---    kio.dmesg(kio.loglevels.DEBUG, "evt: gotsig")
     if sig.n > 0 then
       for k, v in pairs(listeners) do
         if v.sig == sig[1] then
@@ -23,7 +21,6 @@ do
       end
     end
 
---    kio.dmesg(kio.loglevels.DEBUG, "evt: did listeners")
     return table.unpack(sig)
   end
   do

@@ -7,6 +7,9 @@ do
   -- NOTE: a user other than their current one. This simplifies certain things.
   local users = {}
   local upasswd = {}
+
+  -- this gets overridden later but we need this one
+  local old_rawset = rawset
   
   -- users.prime(passwd:table): boolean or nil, string
   --   Prime the 'users' API with data from a passwd file, usually /etc/passwd.
@@ -17,7 +20,7 @@ do
       return nil, "no root password definition"
     end
     users.prime = nil
-    k.sb.k.security.users.prime = nil
+    old_rawset(k.sb.package.loaded.security.users, "prime", nil)
     upasswd = passwd
     return true
   end
@@ -110,7 +113,7 @@ end
 do
   k.hooks.add("sandbox", function()
     -- raw component restrictions
-    sb.component = setmetatable({}, {__index = function(_,m)
+    k.sb.component = setmetatable({}, {__index = function(_,m)
       if k.security.users.user() ~= 0 then
         error(string.format("component.%s: permission denied", m))
       end
