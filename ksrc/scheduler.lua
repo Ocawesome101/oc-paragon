@@ -179,6 +179,13 @@ do
       return k.sched.newthread(func, name)
     end
 
+    function k.sb.process.sethandler(sig, func)
+      checkArg(1, sig, "number")
+      checkArg(2, func, "function")
+      k.sched.info().sighandlers[sig] = func
+      return true
+    end
+
     -- some of the userspace `os' api, specifically the process-centric stuff
     function k.sb.os.getenv(k)
       checkArg(1, k, "string", "number")
