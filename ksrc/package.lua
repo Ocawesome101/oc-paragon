@@ -80,7 +80,6 @@ k.hooks.add("sandbox", function()
     setmetatable(lib, mt)
   end
 
-  kio.dmesg(kio.loglevels.PANIC, "add: require")
   function k.sb.require(module)
     checkArg(1, module, "string")
     if loaded[module] ~= nil then

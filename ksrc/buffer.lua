@@ -157,6 +157,13 @@ function buffer:setvbuf(mode)
   end
 end
 
+function buffer:size()
+  if self.stream.size then
+    return self.stream:size()
+  end
+  return 0
+end
+
 function buffer:close()
   self:flush()
   self.stream:close()

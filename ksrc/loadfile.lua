@@ -13,7 +13,7 @@ function _G.loadfile(file, mode, env)
   return load(data, "="..file, mode or "bt", env or k.sb or _G)
 end
 
-function _G.dofile(file)
+function _G.dofile(file, ...)
   checkArg(1, file, "string")
-  return assert(loadfile(file))()  
+  return assert(loadfile(file))(...)  
 end

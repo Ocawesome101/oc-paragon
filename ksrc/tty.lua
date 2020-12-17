@@ -123,9 +123,11 @@ function vt.new(gpu, screen)
 
   local function checkCursor()
     if cx > w then cx, cy = 1, cy + 1 end
-    if cy >= h then cy = h - 1scroll(1) end
-    if cx < 1 then cx = w cy = cy - 1 end
+    if cy >= h then cy = h - 1 scroll(1) end
+    if cx < 1 then cx = w + cx cy = cy - 1 end
     if cy < 1 then cy = 1 end
+    cx = max(1, min(w, cx))
+    cy = max(1, min(h, cy))
   end
 
   local function flushwb()
@@ -187,16 +189,12 @@ function vt.new(gpu, screen)
         if tonumber(c) then
           nb = nb .. c
         elseif c == ";" then
-          --component.sandbox.log(nb, tonumber(nb), #p)
           p[#p+1] = tonumber(nb) or 0
-          --component.sandbox.log(#p)
           nb = ""
         else
           mode = 0
           if #nb > 0 then
-            --component.sandbox.log(nb, tonumber(nb), #p)
             p[#p+1] = tonumber(nb) or 0
-            --component.sandbox.log(#p)
             nb = ""
           end
           if c == "A" then
@@ -212,19 +210,14 @@ function vt.new(gpu, screen)
           elseif c == "F" then
             cx, cy = 1, cy - max(0, p[1] or 1)
           elseif c == "G" then
-            --component.sandbox.log("\\27[G", p[1])
-            --component.sandbox.log(cx)
             cx = min(w, max(p[1] or 1))
-            --component.sandbox.log(cx)
           elseif c == "H" or c == "f" then
-            --component.sandbox.log("\\27[H", 'x:', p[2], 'y:', p[1])
             cx, cy = max(0, min(w, p[2] or 1)), max(0, min(h - 1, p[1] or 1))
-            --component.sandbox.log("\\27[H", cx, cy)
           elseif c == "J" then
             local n = p[1] or 0
             if n == 0 then
               gpu.fill(cx, cy, w, 1, " ")
-              gpu.fill(cx, cy + 1, h, " ")
+              gpu.fill(1, cy + 1, w, h, " ")
             elseif n == 1 then
               gpu.fill(1, 1, w, cy - 1, " ")
               gpu.fill(cx, cy, w, 1, " ")
