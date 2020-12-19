@@ -120,4 +120,21 @@ do
       return component[m]
     end, __metatable = {}})
   end)
+  
+  k.hooks.add("sandbox", function()
+    -- `computer' API restrictions
+    k.sb.computer.getDeviceInfo = nil
+    k.sb.computer.shutdown = nil
+    setmetatable(k.sb.computer, {
+      __index = function(_, m)
+        if computer[m] then
+          if k.security.users.user() ~= 0 then
+            error(string.format("computer.%s: permission denied", m))
+          end
+          return computer[m]
+        end
+      end,
+      __metatable = {}
+    })
+  end)
 end
