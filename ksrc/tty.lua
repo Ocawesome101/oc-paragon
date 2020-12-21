@@ -154,6 +154,8 @@ function vt.new(gpu, screen)
     gpu.setForeground(_b)
     gpu.setBackground(_f)
     gpu.set(cx, cy, _c)
+    gpu.setForeground(fg)
+    gpu.setBackground(bg)
     for c in str:gmatch(".") do
       if mode == 0 then
         if c == "\n" then

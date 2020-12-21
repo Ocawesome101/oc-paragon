@@ -19,12 +19,9 @@ function buffer.new(stream, mode)
   for c in mode:gmatch(".") do
     new.mode[c] = true
   end
-  local ts = tostring(new):gsub("table", "FILE")
   return setmetatable(new, {
     __index = buffer,
-    __tostring = function()
-      return ts
-    end,
+    __name = "FILE*",
     __metatable = {}
   })
 end

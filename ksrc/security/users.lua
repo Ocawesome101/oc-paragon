@@ -117,6 +117,23 @@ do
       if k.security.users.user() ~= 0 then
         error(string.format("component.%s: permission denied", m))
       end
+      if m == "proxy" then
+        return function(...)
+          local prx = assert(component.proxy(...))
+          local new = setmetatable({}, {__index = function(_, k)
+            if type(prx[k]) == "function" then
+              return function(...)
+                local result = table.pack(prx[k](...))
+                -- prevent huge amounts of component calls from freezing the
+                -- system entirely
+                coroutine.yield(0)
+                return table.unpack(result)
+              end
+            else
+            end
+          end})
+        end
+      end
       return component[m]
     end, __metatable = {}})
   end)
