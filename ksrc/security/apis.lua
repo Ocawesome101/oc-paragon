@@ -14,7 +14,8 @@ do
   end
 
   local function protect(tbl, name)
-    local protected = setmetatable(tbl, {
+    local protected = setmetatable({}, {
+      __index = tbl,
       __newindex = function()
         error((name or "lib") .. " is protected")
       end,

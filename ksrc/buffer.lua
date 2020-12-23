@@ -16,6 +16,7 @@ function buffer.new(stream, mode)
     closed = false,
     bufsize = math.max(512, math.min(8 * 1024, computer.freeMemory() / 8))
   }
+  mode = mode or "r"
   for c in mode:gmatch(".") do
     new.mode[c] = true
   end

@@ -68,6 +68,9 @@ do
     end
     local handle, err = node:open(path, mode)
     if not handle then
+      if err == path then
+        return nil, file..": no such file or directory"
+      end
       return nil, err
     end
     local stream = streamify(node, handle)
