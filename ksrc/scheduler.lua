@@ -24,7 +24,8 @@ do
       stdin = p and p.io.input or {},
       stdout = p and p.io.output or {},
       stderr = p and p.io.stderr or {},
-      owner = iua
+      owner = iua,
+      sighandlers = {}
     }
     new.env.UID = new.owner
     new.env.USER = k.security.users.userByID(new.owner)
@@ -182,7 +183,7 @@ do
     function k.sb.process.sethandler(sig, func)
       checkArg(1, sig, "number")
       checkArg(2, func, "function")
-      k.sched.info().sighandlers[sig] = func
+      k.sched.getinfo().sighandlers[sig] = func
       return true
     end
 

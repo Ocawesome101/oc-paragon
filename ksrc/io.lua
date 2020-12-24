@@ -58,10 +58,11 @@ do
   end
   
   -- io.open(file:string[, mode:string]): table or nil, string
-  --   Returns a buffered file handle to 
+  --   Returns a buffered file stream.
   function io.open(file, mode)
     checkArg(1, file, "string")
     checkArg(2, mode, "string", "nil")
+    mode = mode or "r"
     local node, path = vfs.resolve(file)
     if not node then
       return nil, path
@@ -104,6 +105,7 @@ do
   end
 
   function io.lines(file, ...)
+    checkArg(1, file, "string", "nil")
     if not file then
       return io.input():lines(...)
     end
