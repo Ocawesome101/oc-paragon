@@ -32,6 +32,7 @@ do
     k.sb.sha2 = protect(k.sb.k.sha2)
     k.sb.ec25519 = protect(k.sb.k.ec25519)
     k.sb.security = protect(k.sb.k.security)
+    old_rawset(k.sb.security, "acl", protect(k.sb.k.security.acl))
     old_rawset(k.sb.security, "users", protect(k.sb.k.security.users))
   end)
 end

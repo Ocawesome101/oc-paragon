@@ -64,6 +64,9 @@ do
   function vfs.mount(prx, path)
     checkArg(1, prx, "table")
     checkArg(2, path, "string")
+    if not k.security.acl.hasPermission(k.security.users.user(), "MOUNT_FS") then
+      return nil, "permission denied"
+    end
     path = "/" .. table.concat(segments(path), "/")
     if mnt[path] then
       return nil, "there is already a filesystem mounted there"
@@ -93,6 +96,9 @@ do
   --   Tries to unmount the proxy at the provided path.
   function vfs.umount(path)
     checkArg(1, path, "string")
+    if not k.security.acl.hasPermission(k.security.users.user(), "MOUNT_FS") then
+      return nil, "permission denied"
+    end
     path = "/" .. table.concat(segments(path), "/")
     if not mnt[path] then
       return nil, "no such device"

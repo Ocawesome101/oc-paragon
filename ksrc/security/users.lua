@@ -22,6 +22,7 @@ do
     users.prime = nil
     old_rawset(k.sb.package.loaded.security.users, "prime", nil)
     upasswd = passwd
+    k.security.acl.passwd = passwd
     return true
   end
 
