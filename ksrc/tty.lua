@@ -359,7 +359,7 @@ function vt.new(gpu, screen)
     keyboards[v] = true
   end
 
-  local function key_down(sig, kb, char, code)
+  --[[local function key_down(sig, kb, char, code)
     if keyboards[kb] then
       if char == 0 and code >= 200 then
         local add = ctrlHeld and "\27[1;5" or "\27["
@@ -382,10 +382,7 @@ function vt.new(gpu, screen)
         elseif code == 209 then -- page down
           add = add .. "6~"
         end
-        rb = rb .. add
-        if ec then stream:write((add:gsub("\27", "^"))) end
-      elseif raw then
-        if char ~= 0 then
+        if ctrlHeld then
           local c
           if ctrlHeld and (char > 31 and char < 127) then
             c = string.char(char - 96)
@@ -395,9 +392,12 @@ function vt.new(gpu, screen)
             c = (char > 255 and unicode.char or string.char)(char)
           end
           rb = rb .. c
-          if ec then stream:write(c == "\8" and "\8 \8" or c) end
+          if ec then stream:write(c == "\127" and "\8 \8" or c) end
+        else
+          rb = rb .. add
+          if ec then stream:write((add:gsub("\27", "^"))) end
         end
-      else
+      elseif not raw then
         if char == 8 then
           if #rb > 0 and rb:sub(-1) ~= "\n" then
             rb = unicode.sub(rb, 1, -2)
@@ -413,6 +413,8 @@ function vt.new(gpu, screen)
         end
       end
     end
+  end]]
+  local function key_down()
   end
 
   local function key_up(sig, kb, char, code)
