@@ -348,13 +348,7 @@ function vt.new(gpu, screen)
     return true
   end
 
-  local keys = {
-    lcontrol = 0x1D,
-    rcontrol = 0x9D,
-  }
-
   local keyboards = {}
-  local ctrlHeld = false
   for k,v in pairs(component.invoke(screen or gpu.getScreen(),"getKeyboards"))do
     keyboards[v] = true
   end
@@ -414,16 +408,56 @@ function vt.new(gpu, screen)
       end
     end
   end]]
-  local function key_down()
+  -- this key input logic is... a lot simpler than i initially thought
+  local function key_down(sig, kb, char, code)
+    if keyboards[kb] then
+      local c
+      if char > 0 then
+        c = (char > 255 and unicode.char or string.char)(char)
+      -- up 00; down 208; right 205; left 203
+      elseif code == 200 then
+        c = "\27[A"
+      elseif code == 208 then
+        c = "\27[B"
+      elseif code == 205 then
+        c = "\27[C"
+      elseif code == 203 then
+        c = "\27[D"
+      end
+
+      c = c or ""
+      if char == 13 and not raw then
+        rb = rb .. "\n"
+      else
+        rb = rb .. c
+      end
+      if ec then
+        if char == 13 and not raw then
+          stream:write("\n")
+        elseif char < 32 and char > 0 then
+          -- i n l i n e   l o g i c   f t w
+          stream:write("^"..string.char(
+            (char < 27 and char + 96) or
+            (char == 27 and "[") or
+            (char == 28 and "\\") or
+            (char == 29 and "]") or
+            (char == 30 and "~") or
+            (char == 31 and "?")
+          ):upper())
+        else
+          stream:write(c)
+        end
+      end
+    end
   end
 
-  local function key_up(sig, kb, char, code)
+  --[[local function key_up(sig, kb, char, code)
     if keyboards[kb] then
       if code == keys.lcontrol or code == keys.rcontrol then
         ctrlHeld = false
       end
     end
-  end
+  end]]
 
   local function clipboard(sig, kb, data)
     if keyboards[kb] then
@@ -434,7 +468,7 @@ function vt.new(gpu, screen)
   end
 
   local id1 = k.evt.register("key_down", key_down)
-  local id2 = k.evt.register("key_up", key_up)
+  --local id2 = k.evt.register("key_up", key_up)
   local id3 = k.evt.register("clipboard", clipboard)
 
   -- special character handling functions
@@ -482,7 +516,7 @@ function vt.new(gpu, screen)
   function stream:close()
     self.closed = true
     k.evt.unregister(id1)
-    k.evt.unregister(id2)
+    --k.evt.unregister(id2)
     k.evt.unregister(id3)
     return true
   end
