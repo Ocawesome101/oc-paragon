@@ -3607,62 +3607,8 @@ function vt.new(gpu, screen)
     keyboards[v] = true
   end
 
-  --[[local function key_down(sig, kb, char, code)
-    if keyboards[kb] then
-      if char == 0 and code >= 200 then
-        local add = ctrlHeld and "\27[1;5" or "\27["
-        if code == keys.lcontrol or code == keys.rcontrol then
-          ctrlHeld = true
-          add = ""
-        elseif code == 211 then -- delete
-          add = add .. "3~"
-        elseif code == 200 then -- up
-          add = add .. "A"
-        elseif code == 201 then -- page up
-          -- TODO: do pgUp/pgDn behave differently when ctrl is held?
-          add = "\27[5~"
-        elseif code == 203 then -- left
-          add = add .. "D"
-        elseif code == 205 then -- right
-          add = add .. "C"
-        elseif code == 208 then -- down
-          add = add .. "B"
-        elseif code == 209 then -- page down
-          add = add .. "6~"
-        end
-        if ctrlHeld then
-          local c
-          if ctrlHeld and (char > 31 and char < 127) then
-            c = string.char(char - 96)
-          elseif char == 8 then
-            c = string.char(127)
-          else
-            c = (char > 255 and unicode.char or string.char)(char)
-          end
-          rb = rb .. c
-          if ec then stream:write(c == "\127" and "\8 \8" or c) end
-        else
-          rb = rb .. add
-          if ec then stream:write((add:gsub("\27", "^"))) end
-        end
-      elseif not raw then
-        if char == 8 then
-          if #rb > 0 and rb:sub(-1) ~= "\n" then
-            rb = unicode.sub(rb, 1, -2)
-            if ec then stream:write("\8 \8") end
-          end
-        elseif char == 13 then
-          if ec then stream:write("\n") end
-          rb = rb .. "\n"
-        elseif char ~= 0 then
-          local c = unicode.char(char)
-          if ec then stream:write(c) end
-          rb = rb .. c
-        end
-      end
-    end
-  end]]
   -- this key input logic is... a lot simpler than i initially thought
+  -- it would be
   local function key_down(sig, kb, char, code)
     if keyboards[kb] then
       local c
@@ -3705,14 +3651,6 @@ function vt.new(gpu, screen)
     end
   end
 
-  --[[local function key_up(sig, kb, char, code)
-    if keyboards[kb] then
-      if code == keys.lcontrol or code == keys.rcontrol then
-        ctrlHeld = false
-      end
-    end
-  end]]
-
   local function clipboard(sig, kb, data)
     if keyboards[kb] then
       for c in data:gmatch(".") do
@@ -3722,8 +3660,7 @@ function vt.new(gpu, screen)
   end
 
   local id1 = k.evt.register("key_down", key_down)
-  --local id2 = k.evt.register("key_up", key_up)
-  local id3 = k.evt.register("clipboard", clipboard)
+  local id2 = k.evt.register("clipboard", clipboard)
 
   -- special character handling functions
   local chars = {
@@ -3770,8 +3707,7 @@ function vt.new(gpu, screen)
   function stream:close()
     self.closed = true
     k.evt.unregister(id1)
-    --k.evt.unregister(id2)
-    k.evt.unregister(id3)
+    k.evt.unregister(id2)
     return true
   end
 
