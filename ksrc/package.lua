@@ -24,6 +24,7 @@ k.hooks.add("sandbox", function()
     package = k.sb.package,
     process = k.sb.process,
     ec25519 = k.sb.ec25519,
+    internet = table.copy(k.drv.net.internet or {}),
     security = k.sb.security,
     hostname = table.copy(k.hostname),
     computer = k.sb.computer,
