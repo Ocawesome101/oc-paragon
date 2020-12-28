@@ -55,8 +55,10 @@ do
     if not procs[pid] then
       return nil, "no such process"
     end
+    local allow = k.security.acl.hasPermission(nil, "KILL_PROCESS")
     local proc = procs[pid]
-    if proc.owner == s.getinfo().owner or s.getinfo().owner == 0 then
+    if allow and (proc.owner == s.getinfo().owner 
+                  or s.getinfo().owner == 0) then
       proc:handle(sig)
     else
       return kio.error("PERMISSION_DENIED")

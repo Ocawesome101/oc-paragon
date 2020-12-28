@@ -22,7 +22,7 @@ do
   end)
 
   k.hooks.add("hnget", function(t)
-    t.standard = k.sched.getinfo().env.HOSTNAME or "localhost"
+    t.standard = (k.sched.getinfo() or {env={}}).env.HOSTNAME or "localhost"
   end)
 
   k.hostname = h

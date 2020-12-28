@@ -7,4 +7,3 @@ local kdrv = {}
 kdrv.fs = {}
 kdrv.net = {}
 
---#include "ktmp/drivers.lua"

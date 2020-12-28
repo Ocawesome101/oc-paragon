@@ -11,4 +11,8 @@ do
   local iomt = k.iomt
   k.iomt = nil
   k.hooks.sandbox(iomt)
+  function sb.package.loaded.computer.shutdown(rb)
+    k.hooks.shutdown()
+    computer.shutdown(rb)
+  end
 end

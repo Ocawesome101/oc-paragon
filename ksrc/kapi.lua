@@ -5,5 +5,4 @@ _G.k = {}
 k.args    = kargs
 k.io      = kio
 k.info    = _KINFO
-k.process = sched
-k.drv     = kdrv
+k.drv     = kdrv or {}

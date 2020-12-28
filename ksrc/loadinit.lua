@@ -23,4 +23,7 @@ do
   k.sched.spawn(function()pre_run()ok(k)end, "[init]", 1)
 end
 
+if k.hooks.uspace then
+  k.hooks.uspace()
+end
 k.sched.loop()

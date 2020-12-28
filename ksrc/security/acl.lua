@@ -15,8 +15,9 @@ do
     NO_SUDO_PASSWORD = 512
   }
   function acl.hasPermission(uid, pms)
-    checkArg(1, uid, "number")
+    checkArg(1, uid, "number", "nil")
     checkArg(2, pms, "number", "string")
+    uid = uid or k.security.users.user()
     pms = perms[pms] or pms
     if type(pms) == "string" then
       return nil, "no such permission: "..pms

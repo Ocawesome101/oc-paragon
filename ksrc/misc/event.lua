@@ -27,7 +27,7 @@ do
     local p = computer.pushSignal
     function computer.pushSignal(...)
       local s = table.pack(...)
-      kio.dmesg(kio.loglevels.DEBUG, string.format("PUSH %s %s %s", tostring(s[1]), tostring(s[2]), tostring(s[3])))
+      --kio.dmesg(kio.loglevels.DEBUG, string.format("PUSH %s %s %s", tostring(s[1]), tostring(s[2]), tostring(s[3])))
       p(...)
     end
   end
