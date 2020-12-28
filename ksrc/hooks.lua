@@ -23,13 +23,11 @@ end
 
 do
   -- some default hooks
-  local function sbld(iomt)
+  local function sbld()
     function k.sb.load(x, name, mode, env)
       return load(x, name, mode, env or k.sb)
     end
-    setmetatable(k.sb.io, iomt)
     k.sb.k.vfs = table.copy(vfs)
-    k.sb.k.iomt = nil
     k.sb.k.io.gpu = kio.gpu -- otherwise metatable weirdness happens
     k.sb.k.sb = nil -- just in case
   end

@@ -12,11 +12,11 @@ do
     __index = function(self, key)
       local info = k.sched.getinfo()
       if key == "stdin" then
-        return info:stdin()
+        return info.io.stdin
       elseif key == "stdout" then
-        return info:stdout()
+        return info.io.stdout
       elseif key == "stderr" then
-        return info:stderr()
+        return info.io.stderr
       end
     end,
     __newindex = function(self, key, value)
@@ -33,7 +33,6 @@ do
     end,
     __metatable = {}
   }
-  k.iomt = iomt
   setmetatable(io, iomt)
 
   local st = {}
@@ -113,6 +112,7 @@ do
   end
 
   k.hooks.add("sandbox", function()
+    setmetatable(k.sb.io, iomt)
     function k.sb.print(...)
       local args = table.pack(...)
       for i=1, args.n, 1 do

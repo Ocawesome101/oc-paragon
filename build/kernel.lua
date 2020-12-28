@@ -26,9 +26,9 @@ end
 
 _G._KINFO = {
   name    = "Paragon",
-  version = "0.8.0-dev",
+  version = "0.8.7-dev",
   built   = "2020/12/27",
-  builder = "ocawesome101@"
+  builder = "ocawesome101@manjaro-pbp"
 }
 
 -- kernel i/o
@@ -973,13 +973,11 @@ end
 
 do
   -- some default hooks
-  local function sbld(iomt)
+  local function sbld()
     function k.sb.load(x, name, mode, env)
       return load(x, name, mode, env or k.sb)
     end
-    setmetatable(k.sb.io, iomt)
     k.sb.k.vfs = table.copy(vfs)
-    k.sb.k.iomt = nil
     k.sb.k.io.gpu = kio.gpu -- otherwise metatable weirdness happens
     k.sb.k.sb = nil -- just in case
   end
@@ -1698,11 +1696,11 @@ do
     __index = function(self, key)
       local info = k.sched.getinfo()
       if key == "stdin" then
-        return info:stdin()
+        return info.io.stdin
       elseif key == "stdout" then
-        return info:stdout()
+        return info.io.stdout
       elseif key == "stderr" then
-        return info:stderr()
+        return info.io.stderr
       end
     end,
     __newindex = function(self, key, value)
@@ -1719,7 +1717,6 @@ do
     end,
     __metatable = {}
   }
-  k.iomt = iomt
   setmetatable(io, iomt)
 
   local st = {}
@@ -1799,6 +1796,7 @@ do
   end
 
   k.hooks.add("sandbox", function()
+    setmetatable(k.sb.io, iomt)
     function k.sb.print(...)
       local args = table.pack(...)
       for i=1, args.n, 1 do
@@ -3841,9 +3839,9 @@ do
         screen.bound = gpu.addr
         local close = new.close
         function new:close()
-          close(new)
           gpu.bound = false
           screen.bound = false
+          close(new)
         end
         return new
       end
@@ -3855,8 +3853,13 @@ do
     return function()
       local new = open_pty()
       if new then
-        return kio.buffer.new(new, "rw")
+        local str = kio.buffer.new(new, "rw")
+        str:setvbuf("no")
+        str.bufferSize = 0
+        str.tty = true
+        return str
       end
+      return nil
     end
   end
 

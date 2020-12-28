@@ -41,9 +41,9 @@ do
         screen.bound = gpu.addr
         local close = new.close
         function new:close()
-          close(new)
           gpu.bound = false
           screen.bound = false
+          close(new)
         end
         return new
       end
@@ -55,8 +55,13 @@ do
     return function()
       local new = open_pty()
       if new then
-        return kio.buffer.new(new, "rw")
+        local str = kio.buffer.new(new, "rw")
+        str:setvbuf("no")
+        str.bufferSize = 0
+        str.tty = true
+        return str
       end
+      return nil
     end
   end
 
