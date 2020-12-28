@@ -21,9 +21,9 @@ do
       parent = current,
       priority = priority or math.huge,
       env = p and table.copy(p.env) or {},
-      stdin = p and p.io.input or {},
-      stdout = p and p.io.output or {},
-      stderr = p and p.io.stderr or {},
+      stdin = p and io.input() or {},
+      stdout = p and io.output() or {},
+      stderr = p and io.stderr or {},
       owner = iua,
       sighandlers = {}
     }

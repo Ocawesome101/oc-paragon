@@ -34,6 +34,7 @@
 --#include "ksrc/mods.lua"
 --#include "ksrc/fstab.lua"
 --#include "ksrc/tty.lua"
+--#include "ksrc/pty.lua"
 --#include "ksrc/package.lua"
 --#include "ksrc/sandbox.lua"
 --#include "ksrc/loadinit.lua"

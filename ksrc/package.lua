@@ -10,6 +10,7 @@ k.hooks.add("sandbox", function()
     _G = k.sb,
     os = k.sb.os,
     io = k.sb.io,
+    pty = table.copy(k.pty),
     sha2 = k.sb.sha2,
     sha3 = k.sb.sha3,
     math = k.sb.math,

@@ -380,6 +380,8 @@ function vt.new(gpu, screen)
       if ec then
         if char == 13 and not raw then
           stream:write("\n")
+        elseif char == 8 and not raw then
+          stream:write("\8")
         elseif char < 32 and char > 0 then
           -- i n l i n e   l o g i c   f t w
           stream:write("^"..string.char(
@@ -457,11 +459,12 @@ function vt.new(gpu, screen)
     return true
   end
 
-  local new = kio.buffer.new(stream, "rw")
+  --[[local new = kio.buffer.new(stream, "rw")
   new:setvbuf("no")
   new.bufferSize = 0
   new.tty = true
-  return new
+  return new]]
+  return stream
 end
 
 k.vt = vt
