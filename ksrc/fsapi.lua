@@ -53,7 +53,7 @@ do
       if not node then
         return nil, path
       end
-      return node:list(path)
+      return node:list(path) or {}
     end
 
     k.sb.fs = fs

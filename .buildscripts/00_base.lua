@@ -9,8 +9,6 @@ CONFIG = {
     exec = {
     },
     misc = {
-      "event.lua",
-      "sha3.lua"
     }
   }
 }

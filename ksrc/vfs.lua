@@ -61,12 +61,22 @@ do
 
   -- vfs.mount(prx:table, path:string): boolean or nil, string
   --   Tries to mount the provided proxy at the provided file path.
-  function vfs.mount(prx, path)
-    checkArg(1, prx, "table")
+  function vfs.mount(prx, path, fstype)
+    checkArg(1, prx, "table", "string")
     checkArg(2, path, "string")
+    checkArg(3, fstype, "string", "nil")
     if not k.security.acl.hasPermission(k.security.users.user(), "MOUNT_FS") then
       return nil, "permission denied"
     end
+    local proxy = prx
+    if type(prx) == "string" then
+      proxy = component.proxy(prx)
+    end
+    if proxy.type == "drive" and not fstype then
+      return nil, "missing fstype"
+    end
+    fstype = "managed"
+    prx = k.drv.fs[fstype].create(proxy)
     path = "/" .. table.concat(segments(path), "/")
     if mnt[path] then
       return nil, "there is already a filesystem mounted there"

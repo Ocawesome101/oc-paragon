@@ -36,6 +36,7 @@ function preproc.line(line) -- string -- -- Returns either a function - which ca
  elseif line:match("@%[%{(.-)%}%]") then -- this directive was added by Ocawesome101
   for expr in line:gmatch("@%[%{(.-)%}%]") do
 --   print(expr)
+   expr = expr:gsub("%(%)%[%]%.%+%-%*%^%%$%%", "%%%1")
    local ok, err = load("return " .. expr, "=@[{directive}]", "bt", _G)
    assert(ok, err or "expression " .. expr .. " returned nil!")
    line = line:gsub("@%[%{"..expr.."%}%]", tostring(ok()))

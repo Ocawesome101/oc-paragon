@@ -28,6 +28,8 @@
 --#include "ksrc/io.lua"
 --#include "ksrc/fsapi.lua"
 --#include "ktmp/exec.lua"
+--#include "ksrc/event.lua"
+--#include "ksrc/sha3.lua"
 --#include "ktmp/misc.lua"
 --#include "ktmp/drivers.lua"
 --#include "ksrc/iramfs.lua"

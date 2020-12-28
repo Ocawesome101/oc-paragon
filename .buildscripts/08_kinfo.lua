@@ -3,9 +3,9 @@
 local function add()
   local prg = p()
   log(prg, "adding kernel info to ktmp/kinfo.lua")
-  local hnh = io.popen("hostname", "r")
-  local hostname = hnh:read("a"):gsub("\n", "")
-  hnh:close()
+--  local hnh = io.popen("hostname", "r")
+  local hostname = os.getenv("HOSTNAME")--hnh:read("a"):gsub("\n", "")
+--  hnh:close()
   local file = io.open("ktmp/kinfo.lua", "w")
   file:write(string.format([[
 _G._KINFO = {
