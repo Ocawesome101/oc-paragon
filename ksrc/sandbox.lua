@@ -12,7 +12,8 @@ do
   k.iomt = nil
   k.hooks.sandbox(iomt)
   function sb.package.loaded.computer.shutdown(rb)
-    k.hooks.shutdown()
+    k.io.dmesg("running shutdown hooks")
+    if k.hooks.shutdown then k.hooks.shutdown() end
     computer.shutdown(rb)
   end
 end

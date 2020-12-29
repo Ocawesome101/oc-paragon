@@ -172,8 +172,9 @@ function kio.dmesg(level, msg)
   return true
 end
 
-function kio.hide()
-  if kargs.loglevel < 3 then kargs.loglevel = 3 end
+function kio.redir(f)
+  checkArg(1, f, "function")
+  kio.console = f
 end
 
 do

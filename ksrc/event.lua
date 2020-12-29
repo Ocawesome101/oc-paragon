@@ -1,6 +1,6 @@
 -- basic event listeners
 
-kio.dmesg(kio.loglevels.INFO, "ksrc/misc/event.lua")
+kio.dmesg(kio.loglevels.INFO, "ksrc/event.lua")
 
 do
   local event = {}
@@ -22,14 +22,6 @@ do
     end
 
     return table.unpack(sig)
-  end
-  do
-    local p = computer.pushSignal
-    function computer.pushSignal(...)
-      local s = table.pack(...)
-      --kio.dmesg(kio.loglevels.DEBUG, string.format("PUSH %s %s %s", tostring(s[1]), tostring(s[2]), tostring(s[3])))
-      p(...)
-    end
   end
 
   function event.register(sig, func)

@@ -38,6 +38,7 @@
 --#include "ksrc/tty.lua"
 --#include "ksrc/pty.lua"
 --#include "ksrc/package.lua"
+--#include "ksrc/pwman.lua"
 --#include "ksrc/sandbox.lua"
 --#include "ksrc/loadinit.lua"
 kio.panic("premature exit!")
