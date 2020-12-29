@@ -52,7 +52,7 @@ do
     kio.dmesg(kio.loglevels.DEBUG, "creating initfs proxy")
     local idisk = kdrv.fs.brofs.create(fake)
     kio.dmesg(kio.loglevels.INFO, "mounting initfs at /")
-    vfs.mount(idisk, "/")
+    vfs.mount(fake, "/", "brofs")
   else
     kio.panic("invalid bootfs specification:\n  component is not 'drive' or 'filesystem'")
   end

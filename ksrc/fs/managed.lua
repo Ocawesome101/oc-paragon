@@ -24,6 +24,7 @@ do
   })
   
   function default:stat(file)
+    checkArg(1, file, "string")
     if not self.dev.exists(file) then
       return nil, file .. ": file not found"
     end

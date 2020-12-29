@@ -36,23 +36,25 @@ do
   function vfs.resolve(path)
     checkArg(1, path, "string")
     kio.dmesg(kio.loglevels.DEBUG, "vfs: resolve "..path)
+    if not mnt["/"] then
+      return nil, "root filesystem not mounted"
+    end
     if path == "/" then
-      if mnt["/"] then
-        return mnt["/"], ""
-      else
-        return nil, "root filesystem not mounted"
-      end
+      return mnt["/"], ""
     end
     if path:sub(1, 1) ~= "/" then path = "/" .. path end
+    if mnt[path] then
+      return mnt[path], "/"
+    end
     local segs = segments(path)
     for i=#segs, 1, -1 do
-      local retpath = "/" .. table.concat(segs, "/", i, #segs)
+      local cur = "/" .. table.concat(segs, "/", i + 1, #segs)
       local try = "/" .. table.concat(segs, "/", 1, i)
       if mnt[try] then
-        return mnt[try], retpath
+        return mnt[try], cur
       end
     end
-    if path:sub(1,1)=="/" then
+    if path:sub(1,1) == "/" then
       return vfs.resolve("/"), path
     end
     kio.dmesg(kio.loglevels.DEBUG, "no such file: ".. path)
@@ -75,8 +77,10 @@ do
     if proxy.type == "drive" and not fstype then
       return nil, "missing fstype"
     end
-    fstype = "managed"
-    prx = k.drv.fs[fstype].create(proxy)
+    fstype = fstype or "managed"
+    if not prx.fstype then 
+      prx = k.drv.fs[fstype].create(proxy)
+    end
     path = "/" .. table.concat(segments(path), "/")
     if mnt[path] then
       return nil, "there is already a filesystem mounted there"
