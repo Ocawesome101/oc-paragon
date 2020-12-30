@@ -127,7 +127,7 @@ do
         end
       end
       if computer.freeMemory() < 1024 then
-        kio.dmesg(kio.loglevels.INFO, "low memory - collecting garbage")
+        kio.dmesg(kio.loglevels.DEBUG, "low memory - collecting garbage")
         collectgarbage()
       end
     end

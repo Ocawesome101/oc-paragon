@@ -109,8 +109,7 @@ function kio.pipe()
   return setmetatable({buf = "", strict = true}, {__index = _pipe}), "rw"
 end
 
--- temporary log buffer until we get a root filesystem
-kio.__dmesg = {buffer={}}
+kio.__dmesg = {}
 
 local console
 do
@@ -138,7 +137,6 @@ do
   end
 
   function kio.__dmesg:write(msg)
-    table.insert(self.buffer, msg)
   end
 
   kio.gpu = gpu
