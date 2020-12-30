@@ -1,12 +1,11 @@
 -- automatic card dock support --
 
 do
-  local _CD_TYPE = "carddock"
-  for k, v in component.list(_CD_TYPE) do
+  for k, v in component.list("carddock") do
     component.invoke(k, "bindComponent")
   end
   k.evt.register("component_added", function(_, a, t)
-    if t == _CD_TYPE then
+    if t == "carddock" then
       component.invoke(a, "bindComponent")
     end
   end)
