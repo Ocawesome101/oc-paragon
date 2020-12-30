@@ -15,6 +15,7 @@ k.hooks.add("sandbox", function()
     sha3 = k.sb.sha3,
     math = k.sb.math,
     pipe = {create = k.io.pipe},
+    uuid = k.sb.k.uuid,
     event = table.copy(k.evt),
     table = k.sb.table,
     users = k.sb.security.users,
