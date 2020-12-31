@@ -28,11 +28,19 @@ do
   local pqueue = {}
 
   local log
+  local function concat(...)
+    local args = table.pack(...)
+    local ret = ""
+    for i=1, args.n, 1 do
+      ret = ret .. tostring(args[i]) .. " "
+    end
+    return ret
+  end
   local function dprint(...)
     if cfg.debug then
-      log = log or io.open("/mtel-dbg.log", "a")
+      log = log or io.open("/mtel-dbg.log", "a") or io.open("/mtel-dbg.log", "w")
       if log then
-        log:write(table.concat({...}, " ").."\n")
+        log:write(concat(...).."\n")
         log:flush()
       end
     end
@@ -185,8 +193,8 @@ do
 
   local function ppthread()
     while true do
-      coroutine.yield(0.5)
       packetPusher()
+      coroutine.yield(0.5)
     end
   end
 

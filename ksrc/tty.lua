@@ -381,7 +381,7 @@ function vt.new(gpu, screen)
         if char == 13 and not raw then
           stream:write("\n")
         elseif char == 8 and not raw then
-          stream:write("\8")
+          stream:write("\8 \8")
         elseif char < 32 and char > 0 then
           -- i n l i n e   l o g i c   f t w
           stream:write("^"..string.char(
