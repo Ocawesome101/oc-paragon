@@ -20,7 +20,7 @@ do
       name = name,
       parent = current,
       priority = priority or math.huge,
-      env = p and table.copy(p.env) or {},
+      env = p and table.copy(p.env) or {TERM="paragon"},
       stdin = p and io.input() or {},
       stdout = p and io.output() or {},
       stderr = p and io.stderr or {},
