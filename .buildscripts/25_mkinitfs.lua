@@ -16,7 +16,7 @@ local function gen()
     local data = h:read("a")
     out:write(data)
     h:close()
-    local ftent = string.pack(pat, start, math.ceil(#data / 512), math.ceil(#data / 512), flags, 0xFF, file)
+    local ftent = string.pack(pat, start, math.ceil(#data / 512), math.ceil(#data / 512), flags, 0xFF, file .. string.rep("\0", 24 - #file))
     if #ftent > 32 then
       error("INVALID FILE TABLE ENTRY LENGTH: "..#ftent)
     end
